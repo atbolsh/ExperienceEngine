@@ -17,6 +17,13 @@ An AI agent system that explores environments, records experiences, and leverage
 - Delete files
 - Get current working directory
 
+### 📜 Scripting Capabilities
+- Write Python scripts to the `scripts/` directory
+- Execute scripts with optional command-line arguments
+- List available scripts
+- Read and delete scripts
+- 30-second execution timeout for safety
+
 ### 🧠 Sequential Thinking
 - Break down complex problems into step-by-step reasoning
 - Organize multi-step thought processes
@@ -125,6 +132,7 @@ Or the agent can do it automatically when appropriate.
   - **semantic_tools.py** - Semantic memory queries
   - **procedural_tools.py** - Procedural memory queries
   - **episodic_tools.py** - Episodic memory queries
+  - **scripting_tools.py** - Python script management and execution
   - **thinking_tools.py** - Sequential thinking and reasoning tools
 - **requirements.txt** - Python dependencies
 - **.env** - Environment variables (API keys)
@@ -147,6 +155,15 @@ The agent can perform complex filesystem tasks:
 - Write logs or outputs
 - Organize files into directories
 - Clean up temporary files
+
+### Scripting Capabilities
+
+The agent can create and execute Python scripts:
+- Write reusable automation scripts
+- Execute scripts with command-line arguments
+- Manage script lifecycle (create, read, execute, delete)
+- 30-second timeout prevents runaway processes
+- Security measures prevent path traversal attacks
 
 ### RAG Integration
 

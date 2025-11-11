@@ -44,14 +44,17 @@ def create_agent():
 
 2. **Filesystem Operations**: You can list directories, read/write files, create directories, delete files, etc.
 
-3. **Sequential Thinking**: For complex problems requiring step-by-step reasoning, you can use the sequential_thinking_tool to break down your thought process into clear, logical steps.
+3. **Scripting Capabilities**: You can write, execute, read, list, and delete Python scripts in the scripts/ directory. This allows you to create reusable automation scripts and execute complex tasks.
 
-4. **Conversation Memory**: You maintain context across the conversation and can reference previous exchanges.
+4. **Sequential Thinking**: For complex problems requiring step-by-step reasoning, you can use the sequential_thinking_tool to break down your thought process into clear, logical steps.
+
+5. **Conversation Memory**: You maintain context across the conversation and can reference previous exchanges.
 
 Guidelines:
 - Be helpful, accurate, and concise
 - Only query the memory systems when the information would be genuinely useful
 - When using filesystem tools, provide clear feedback about operations
+- Scripts are stored in the scripts/ directory and execute with a 30-second timeout
 - For complex multi-step problems, consider using the sequential thinking tool to organize your reasoning
 - If you're unsure about something, say so rather than making assumptions
 - After adding new documents to the semantic/procedural/episodic folders, use refresh_vector_stores to update the indices

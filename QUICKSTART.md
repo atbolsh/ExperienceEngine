@@ -53,6 +53,7 @@ experience-engine/
 │   ├── semantic_tools.py
 │   ├── procedural_tools.py
 │   ├── episodic_tools.py
+│   ├── scripting_tools.py
 │   └── thinking_tools.py
 ├── semantic/           # Descriptive knowledge (empty)
 ├── procedural/         # How-to guides (empty)
@@ -69,6 +70,7 @@ experience-engine/
 ✅ **Three memory types**: semantic, procedural, episodic  
 ✅ **FAISS vector stores** for intelligent retrieval  
 ✅ **Filesystem tools**: read, write, list, create, delete  
+✅ **Scripting tools**: write and execute Python scripts  
 ✅ **Sequential thinking**: step-by-step reasoning for complex problems  
 ✅ **Chat memory**: maintains context across conversation  
 ✅ **Smart RAG**: only queries memory when relevant  

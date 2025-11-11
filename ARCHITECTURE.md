@@ -18,6 +18,7 @@ experience-engine/
 │   ├── semantic_tools.py    # Semantic memory queries
 │   ├── procedural_tools.py  # Procedural memory queries
 │   ├── episodic_tools.py    # Episodic memory queries
+│   ├── scripting_tools.py   # Python script management and execution
 │   └── thinking_tools.py    # Sequential thinking and reasoning
 │
 ├── semantic/                # Semantic memory documents (empty by default)
@@ -122,6 +123,22 @@ The tools are organized in a modular fashion, making it easy to add new capabili
 - **Dependencies**: `tools.memory_tools`
 - **Pattern**: Thin wrapper around memory backbone
 
+#### `tools/scripting_tools.py`
+- **Purpose**: Python script management and execution
+- **Tools Provided**:
+  - `write_script` - Create Python scripts in scripts/ directory
+  - `execute_script` - Run scripts with optional arguments (30s timeout)
+  - `list_scripts` - List available scripts
+  - `read_script` - Read script contents
+  - `delete_script` - Remove scripts
+- **Dependencies**: `subprocess`, `pathlib`
+- **Pattern**: Self-contained tool module with security features
+- **Security Features**:
+  - Path traversal prevention (blocks `..`, `/`, `\`)
+  - Execution timeout (30 seconds)
+  - Scripts isolated to scripts/ directory
+  - Automatic .py extension handling
+
 #### `tools/thinking_tools.py`
 - **Purpose**: Sequential thinking and step-by-step reasoning
 - **Tools Provided**:
@@ -159,6 +176,8 @@ User Input
                     └─> LLM decides which tools to use
                           └─> Tool execution
                                 ├─> Filesystem tools (direct operations)
+                                ├─> Scripting tools (create/execute scripts)
+                                ├─> Thinking tools (sequential reasoning)
                                 └─> Memory tools
                                       └─> memory_tools.query_memory_store()
                                             └─> vector_store.query_store()
