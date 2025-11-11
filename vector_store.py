@@ -1,0 +1,178 @@
+"""
+Vector store management for FAISS indices.
+Handles creation, loading, and querying of FAISS vector databases for each document type.
+"""
+
+import os
+from typing import List, Optional
+from pathlib import Path
+
+from langchain_community.vectorstores import FAISS
+from langchain_openai import OpenAIEmbeddings
+from langchain_community.document_loaders import DirectoryLoader, TextLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.schema import Document
+
+
+class VectorStoreManager:
+    """Manages FAISS vector stores for semantic, procedural, and episodic documents."""
+    
+    def __init__(self, base_path: str = "."):
+        self.base_path = Path(base_path)
+        self.embeddings = OpenAIEmbeddings()
+        self.text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=200,
+            length_function=len,
+        )
+        
+        # Initialize vector stores
+        self.semantic_store: Optional[FAISS] = None
+        self.procedural_store: Optional[FAISS] = None
+        self.episodic_store: Optional[FAISS] = None
+        
+        # Paths for persisted indices
+        self.semantic_path = self.base_path / "semantic"
+        self.procedural_path = self.base_path / "procedural"
+        self.episodic_path = self.base_path / "episodic"
+        
+        self.semantic_index_path = self.base_path / ".faiss_semantic"
+        self.procedural_index_path = self.base_path / ".faiss_procedural"
+        self.episodic_index_path = self.base_path / ".faiss_episodic"
+    
+    def load_documents_from_directory(self, directory: Path) -> List[Document]:
+        """Load all text documents from a directory."""
+        if not directory.exists():
+            return []
+        
+        documents = []
+        for file_path in directory.rglob("*.txt"):
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    documents.append(Document(
+                        page_content=content,
+                        metadata={"source": str(file_path)}
+                    ))
+            except Exception as e:
+                print(f"Error loading {file_path}: {e}")
+        
+        # Also support .md files
+        for file_path in directory.rglob("*.md"):
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                    documents.append(Document(
+                        page_content=content,
+                        metadata={"source": str(file_path)}
+                    ))
+            except Exception as e:
+                print(f"Error loading {file_path}: {e}")
+        
+        return documents
+    
+    def create_or_load_vector_store(self, doc_type: str) -> Optional[FAISS]:
+        """Create or load a FAISS vector store for a specific document type."""
+        if doc_type == "semantic":
+            directory = self.semantic_path
+            index_path = self.semantic_index_path
+        elif doc_type == "procedural":
+            directory = self.procedural_path
+            index_path = self.procedural_index_path
+        elif doc_type == "episodic":
+            directory = self.episodic_path
+            index_path = self.episodic_index_path
+        else:
+            raise ValueError(f"Unknown document type: {doc_type}")
+        
+        # Try to load existing index
+        if index_path.exists():
+            try:
+                vector_store = FAISS.load_local(
+                    str(index_path),
+                    self.embeddings,
+                    allow_dangerous_deserialization=True
+                )
+                print(f"Loaded existing {doc_type} vector store from {index_path}")
+                return vector_store
+            except Exception as e:
+                print(f"Error loading existing index for {doc_type}: {e}")
+        
+        # Create new index from documents
+        documents = self.load_documents_from_directory(directory)
+        
+        if not documents:
+            print(f"No documents found in {directory}. Creating empty vector store.")
+            return None
+        
+        # Split documents into chunks
+        chunks = self.text_splitter.split_documents(documents)
+        
+        if not chunks:
+            return None
+        
+        # Create FAISS vector store
+        vector_store = FAISS.from_documents(chunks, self.embeddings)
+        
+        # Save the index
+        vector_store.save_local(str(index_path))
+        print(f"Created and saved {doc_type} vector store with {len(chunks)} chunks")
+        
+        return vector_store
+    
+    def initialize_all_stores(self):
+        """Initialize all three vector stores."""
+        print("Initializing vector stores...")
+        self.semantic_store = self.create_or_load_vector_store("semantic")
+        self.procedural_store = self.create_or_load_vector_store("procedural")
+        self.episodic_store = self.create_or_load_vector_store("episodic")
+        print("Vector stores initialized.")
+    
+    def refresh_store(self, doc_type: str):
+        """Refresh a specific vector store by rebuilding it from documents."""
+        if doc_type == "semantic":
+            index_path = self.semantic_index_path
+        elif doc_type == "procedural":
+            index_path = self.procedural_index_path
+        elif doc_type == "episodic":
+            index_path = self.episodic_index_path
+        else:
+            raise ValueError(f"Unknown document type: {doc_type}")
+        
+        # Remove old index if it exists
+        if index_path.exists():
+            import shutil
+            shutil.rmtree(index_path)
+        
+        # Create new index
+        new_store = self.create_or_load_vector_store(doc_type)
+        
+        # Update the instance variable
+        if doc_type == "semantic":
+            self.semantic_store = new_store
+        elif doc_type == "procedural":
+            self.procedural_store = new_store
+        elif doc_type == "episodic":
+            self.episodic_store = new_store
+    
+    def query_store(self, doc_type: str, query: str, k: int = 4) -> List[Document]:
+        """Query a specific vector store and return relevant documents."""
+        if doc_type == "semantic":
+            store = self.semantic_store
+        elif doc_type == "procedural":
+            store = self.procedural_store
+        elif doc_type == "episodic":
+            store = self.episodic_store
+        else:
+            raise ValueError(f"Unknown document type: {doc_type}")
+        
+        if store is None:
+            return []
+        
+        try:
+            results = store.similarity_search(query, k=k)
+            return results
+        except Exception as e:
+            print(f"Error querying {doc_type} store: {e}")
+            return []
+
