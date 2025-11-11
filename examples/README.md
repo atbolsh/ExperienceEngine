@@ -1,25 +1,60 @@
-# Example Documents
+# Example Memory Folders
 
-This directory contains example documents that demonstrate how to structure information for each type of memory.
+This directory contains example memory folders that demonstrate the new folder-based memory structure.
 
-## Files
+## Memory Folder Format
 
-- `example_concepts.md` - Example of semantic memory (concepts and definitions)
-- `example_procedures.md` - Example of procedural memory (how-to guides)
-- `example_episode.md` - Example of episodic memory (past experiences)
+**Important:** Memories are now stored as **folders**, not individual files!
+
+Each memory folder contains:
+- **Exactly ONE text file** (`.txt` or `.md`) - The main content
+- **0-10 images** (optional) - Visual content with descriptive filenames
+
+See `MEMORY_FORMAT.md` for complete documentation.
+
+## Example Folders
+
+- `example_semantic_memory/` - Example of semantic memory (concepts with images)
+- `example_procedural_memory/` - Example of procedural memory (how-to with screenshots)
+- `example_episodic_memory/` - Example of episodic memory (experiences with photos)
+
+Each folder contains:
+- One text file with the memory content
+- Placeholder files explaining what images could be included
 
 ## Usage
 
-These examples are for reference only. To add memories to your agent:
+To add memories to your agent:
 
-1. Create `.txt` or `.md` files in the appropriate directory:
-   - `../semantic/` for descriptive knowledge
-   - `../procedural/` for step-by-step instructions
-   - `../episodic/` for experience records
+1. **Create a memory folder** in the appropriate directory:
+   ```
+   semantic/my_concept/
+   procedural/my_procedure/
+   episodic/my_experience/
+   ```
 
-2. After adding documents, ask the agent to refresh the vector stores, or use the `refresh_vector_stores` tool.
+2. **Add exactly one text file**:
+   ```
+   semantic/my_concept/description.txt
+   ```
+
+3. **Optionally add images (0-10)**:
+   ```
+   semantic/my_concept/diagram.png
+   semantic/my_concept/example.jpg
+   ```
+
+4. **Refresh vector stores**:
+   Ask the agent to refresh, or use the `refresh_vector_stores` tool.
+
+## Image Access
+
+- Text content is automatically indexed in FAISS
+- Images are accessed on-demand using image tools:
+  - `list_memory_images` - See available images
+  - `analyze_memory_image` - Analyze images with GPT-4o vision
 
 ## Note
 
-The actual memory directories (`semantic/`, `procedural/`, `episodic/`) should only contain real memories, not example files. These examples are kept here for reference.
+The actual memory directories (`semantic/`, `procedural/`, `episodic/`) should only contain real memories, not these examples. These are kept here for reference.
 

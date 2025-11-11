@@ -67,8 +67,9 @@ experience-engine/
 ## Key Features
 
 ✅ **Conversational agent** with GPT-4o  
-✅ **Three memory types**: semantic, procedural, episodic  
-✅ **FAISS vector stores** for intelligent retrieval  
+✅ **Three memory types**: semantic, procedural, episodic (with images!)  
+✅ **FAISS vector stores** for intelligent text retrieval  
+✅ **Vision-enabled**: GPT-4o analyzes images from memories  
 ✅ **Filesystem tools**: read, write, list, create, delete  
 ✅ **Scripting tools**: write and execute Python scripts  
 ✅ **Sequential thinking**: step-by-step reasoning for complex problems  
@@ -77,11 +78,19 @@ experience-engine/
 
 ## Next Steps
 
-1. Try asking questions that use the example documents
-2. Add your own documents to semantic/procedural/episodic
-3. Ask the agent to refresh vector stores after adding documents
-4. Experiment with filesystem operations
-5. Clear history with the `clear` command when needed
+1. Check out the example memory folders in `examples/`
+2. Read `examples/MEMORY_FORMAT.md` for the memory folder structure
+3. Create your own memory folders in semantic/procedural/episodic:
+   ```
+   semantic/my_concept/
+   ├── description.txt
+   ├── diagram.png
+   └── example.jpg
+   ```
+4. Ask the agent to refresh vector stores after adding memories
+5. Try asking questions that reference images in memories
+6. Experiment with filesystem operations and scripting
+7. Clear history with the `clear` command when needed
 
 Enjoy exploring! 🚀
 

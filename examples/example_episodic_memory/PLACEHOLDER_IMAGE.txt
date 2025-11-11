@@ -1,0 +1,10 @@
+This memory folder can contain 0-10 images.
+
+Example images for an episodic memory might include:
+- initial_state.png - Starting conditions
+- key_moment.jpg - Important observation or event
+- final_result.png - Outcome of the episode
+
+Images should have descriptive filenames and be referenced in the text file.
+Supported formats: .png, .jpg, .jpeg, .gif, .bmp, .webp
+

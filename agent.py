@@ -40,6 +40,8 @@ def create_agent():
    - Procedural Memory: Step-by-step instructions and how-to guides  
    - Episodic Memory: Detailed records of past interactions and experiences
    
+   Memories are stored as folders containing text (always indexed) and optionally images (0-10 per memory).
+   Text is searchable via RAG tools. Images can be accessed and analyzed on-demand using image tools.
    Use these memory systems ONLY when relevant to the user's query. Don't query them unnecessarily.
 
 2. **Filesystem Operations**: You can list directories, read/write files, create directories, delete files, etc.

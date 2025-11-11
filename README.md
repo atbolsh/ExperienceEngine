@@ -4,10 +4,15 @@ An AI agent system that explores environments, records experiences, and leverage
 
 ## Features
 
-### 🧠 Three Types of Memory
+### 🧠 Three Types of Memory (with Images!)
 - **Semantic Memory**: Descriptive information, concepts, and definitions about the environment
 - **Procedural Memory**: Step-by-step instructions for common interactions and tasks
 - **Episodic Memory**: Detailed, truthful records of instructive prior interactions
+
+Each memory is a **folder** containing:
+- Exactly one text file (indexed in FAISS for search)
+- 0-10 images with descriptive names (accessed on-demand)
+- Images can be analyzed using GPT-4o vision when relevant
 
 ### 🔧 Filesystem Tools
 - List directory contents
@@ -92,13 +97,23 @@ Assistant: [May query procedural memory if relevant]
 
 ## Memory System
 
-### Adding Documents
+### Adding Memories
 
-The agent can read from three directories for long-term memory:
+The agent can read from three directories for long-term memory. Each memory is a **folder**:
 
-1. **semantic/** - Add `.txt` or `.md` files with descriptive information
-2. **procedural/** - Add `.txt` or `.md` files with step-by-step guides
-3. **episodic/** - Add `.txt` or `.md` files with detailed interaction records
+1. **semantic/** - Create folders with descriptive information
+2. **procedural/** - Create folders with step-by-step guides
+3. **episodic/** - Create folders with detailed interaction records
+
+**Folder Structure:**
+```
+semantic/my_concept/
+├── description.txt (exactly one text file required)
+├── diagram.png (0-10 images optional)
+└── example.jpg
+```
+
+See `examples/MEMORY_FORMAT.md` for complete documentation.
 
 ### Refreshing Vector Stores
 
@@ -114,9 +129,18 @@ Or the agent can do it automatically when appropriate.
 ### How Memory Works
 
 - Each directory has its own FAISS vector index (stored in `.faiss_*` directories)
-- Documents are automatically chunked and embedded using OpenAI embeddings
-- The agent queries these stores ONLY when relevant to the user's question
+- Memory folders are processed: text is indexed, images are cataloged
+- Text content is chunked and embedded using OpenAI embeddings
+- The agent queries text stores ONLY when relevant to the user's question
+- Images are accessed on-demand using specialized image tools
 - Vector stores are created on first run and loaded from disk on subsequent runs
+
+### Image Tools
+
+When memories contain relevant images:
+- `list_memory_images` - See what images are in a memory
+- `retrieve_memory_image` - Get image information
+- `analyze_memory_image` - Use GPT-4o vision to analyze images in context
 
 ## Architecture
 
@@ -132,6 +156,8 @@ Or the agent can do it automatically when appropriate.
   - **semantic_tools.py** - Semantic memory queries
   - **procedural_tools.py** - Procedural memory queries
   - **episodic_tools.py** - Episodic memory queries
+  - **image_tools.py** - Image retrieval and vision analysis
+  - **memory_schema.py** - Memory folder format validation
   - **scripting_tools.py** - Python script management and execution
   - **thinking_tools.py** - Sequential thinking and reasoning tools
 - **requirements.txt** - Python dependencies

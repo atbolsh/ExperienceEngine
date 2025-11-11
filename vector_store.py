@@ -41,33 +41,43 @@ class VectorStoreManager:
         self.episodic_index_path = self.base_path / ".faiss_episodic"
     
     def load_documents_from_directory(self, directory: Path) -> List[Document]:
-        """Load all text documents from a directory."""
+        """
+        Load all text documents from memory folders in a directory.
+        
+        Each memory is a folder containing:
+        - Exactly one text file (.txt or .md)
+        - 0-10 images (which are ignored for indexing)
+        
+        Only the text content is loaded and indexed in FAISS.
+        """
         if not directory.exists():
             return []
         
-        documents = []
-        for file_path in directory.rglob("*.txt"):
-            try:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    documents.append(Document(
-                        page_content=content,
-                        metadata={"source": str(file_path)}
-                    ))
-            except Exception as e:
-                print(f"Error loading {file_path}: {e}")
+        from tools.memory_schema import list_memory_folders
         
-        # Also support .md files
-        for file_path in directory.rglob("*.md"):
+        documents = []
+        
+        # Load memory folders
+        memory_folders = list_memory_folders(directory)
+        
+        for memory in memory_folders:
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    documents.append(Document(
-                        page_content=content,
-                        metadata={"source": str(file_path)}
-                    ))
+                # Create metadata including memory name and available images
+                metadata = {
+                    "source": str(memory.text_file),
+                    "memory_name": memory.memory_name,
+                    "memory_folder": str(memory.folder_path),
+                    "has_images": len(memory.image_files) > 0,
+                    "image_count": len(memory.image_files),
+                    "image_names": memory.image_names
+                }
+                
+                documents.append(Document(
+                    page_content=memory.text_content,
+                    metadata=metadata
+                ))
             except Exception as e:
-                print(f"Error loading {file_path}: {e}")
+                print(f"Error loading memory {memory.folder_name}: {e}")
         
         return documents
     

@@ -18,6 +18,8 @@ experience-engine/
 │   ├── semantic_tools.py    # Semantic memory queries
 │   ├── procedural_tools.py  # Procedural memory queries
 │   ├── episodic_tools.py    # Episodic memory queries
+│   ├── image_tools.py       # Image retrieval and vision analysis
+│   ├── memory_schema.py     # Memory folder format validation
 │   ├── scripting_tools.py   # Python script management and execution
 │   └── thinking_tools.py    # Sequential thinking and reasoning
 │
@@ -123,6 +125,29 @@ The tools are organized in a modular fashion, making it easy to add new capabili
 - **Dependencies**: `tools.memory_tools`
 - **Pattern**: Thin wrapper around memory backbone
 
+#### `tools/image_tools.py`
+- **Purpose**: Image retrieval and vision analysis from memory folders
+- **Tools Provided**:
+  - `list_memory_images` - List available images in a memory
+  - `retrieve_memory_image` - Get image information
+  - `analyze_memory_image` - Use GPT-4o vision to analyze images in context
+- **Dependencies**: `langchain_openai`, `tools.memory_schema`, `base64`
+- **Pattern**: Vision-enabled tool module
+- **Features**:
+  - On-demand image access (not loaded during indexing)
+  - Context-aware analysis (includes memory text)
+  - Supports multiple image formats
+
+#### `tools/memory_schema.py`
+- **Purpose**: Memory folder format definition and validation
+- **Functionality**:
+  - Defines MemoryFolder dataclass
+  - Validates folder structure (1 text file, 0-10 images)
+  - Loads memory folders with metadata
+  - Lists all valid memories in a directory
+- **Dependencies**: `pathlib`, `dataclasses`
+- **Pattern**: Shared utility module
+
 #### `tools/scripting_tools.py`
 - **Purpose**: Python script management and execution
 - **Tools Provided**:
@@ -215,23 +240,28 @@ To add new tools:
 
 ### Three Types of Memory
 
+Each memory is a **folder** containing one text file and optionally 0-10 images.
+
 1. **Semantic Memory** (`semantic/`)
    - Descriptive information
    - Concepts and definitions
    - General knowledge
    - "What" something is
+   - Images: diagrams, charts, concept illustrations
 
 2. **Procedural Memory** (`procedural/`)
    - Step-by-step instructions
    - How-to guides
    - Procedures and workflows
    - "How" to do something
+   - Images: screenshots, step visualizations, examples
 
 3. **Episodic Memory** (`episodic/`)
    - Past interactions
    - Specific experiences
    - Temporal events
    - "When" something happened
+   - Images: photos, state captures, observations
 
 ### Vector Store Implementation
 

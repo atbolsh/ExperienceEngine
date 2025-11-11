@@ -1,0 +1,10 @@
+This memory folder can contain 0-10 images.
+
+Example images for a semantic memory about vector databases might include:
+- faiss_architecture.png - Diagram showing FAISS structure
+- similarity_search.jpg - Visual explanation of similarity search
+- embedding_space.png - Visualization of vector embeddings
+
+Images should have descriptive filenames and be referenced in the text file.
+Supported formats: .png, .jpg, .jpeg, .gif, .bmp, .webp
+

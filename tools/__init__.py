@@ -14,6 +14,7 @@ from tools.procedural_tools import create_procedural_tools
 from tools.episodic_tools import create_episodic_tools
 from tools.thinking_tools import create_thinking_tools
 from tools.scripting_tools import create_scripting_tools
+from tools.image_tools import create_image_tools
 
 
 def create_tools() -> List[Tool]:
@@ -35,6 +36,9 @@ def create_tools() -> List[Tool]:
     
     # Add scripting tools
     tools.extend(create_scripting_tools())
+    
+    # Add image tools
+    tools.extend(create_image_tools())
     
     # Add thinking tools
     tools.extend(create_thinking_tools())

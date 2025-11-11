@@ -1,0 +1,10 @@
+This memory folder can contain 0-10 images.
+
+Example images for a procedural memory might include:
+- step1_screenshot.png - Visual guide for first step
+- step2_expected_output.jpg - What success looks like
+- troubleshooting_diagram.png - Common issues and solutions
+
+Images should have descriptive filenames and be referenced in the text file.
+Supported formats: .png, .jpg, .jpeg, .gif, .bmp, .webp
+

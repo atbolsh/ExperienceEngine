@@ -21,6 +21,10 @@ def query_episodic_memory(query: str, k: int = 4) -> str:
     """
     Query the episodic memory for detailed records of past interactions.
     Use this when you need to recall specific experiences or past events.
+    
+    Note: Memories are stored as folders containing text and optionally images (0-10).
+    This tool searches only the text content. If a memory mentions images and you need
+    to see them, use the image tools (list_memory_images, analyze_memory_image).
     """
     return query_memory_store("episodic", query, k)
 
@@ -31,7 +35,7 @@ def create_episodic_tools() -> List[Tool]:
         Tool(
             name="query_episodic_memory",
             func=query_episodic_memory,
-            description="Query episodic memory for detailed records of past interactions and experiences. Use when you need to recall specific past events. Inputs: query (required), k (optional, default 4)",
+            description="Query episodic memory for detailed records of past interactions and experiences. Use when you need to recall specific past events. Memories may contain images - check metadata. Inputs: query (required), k (optional, default 4)",
             args_schema=RAGQueryInput,
         ),
     ]
