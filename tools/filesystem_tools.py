@@ -3,10 +3,11 @@ Filesystem manipulation tools.
 Provides tools for file and directory operations.
 """
 
+import shutil
 from pathlib import Path
 from typing import List
 
-from langchain.tools import Tool
+from langchain.tools import Tool, StructuredTool
 from langchain.pydantic_v1 import BaseModel, Field
 
 
@@ -130,18 +131,22 @@ def get_current_directory() -> str:
 
 
 def delete_file(file_path: str) -> str:
-    """Delete a file."""
+    """Delete a file or directory."""
     try:
         target_path = Path(file_path).resolve()
         if not target_path.exists():
-            return f"Error: File '{file_path}' does not exist."
-        if not target_path.is_file():
-            return f"Error: Path '{file_path}' is not a file."
+            return f"Error: Path '{file_path}' does not exist."
         
-        target_path.unlink()
-        return f"Successfully deleted '{file_path}'."
+        if target_path.is_file():
+            target_path.unlink()
+            return f"Successfully deleted file '{file_path}'."
+        elif target_path.is_dir():
+            shutil.rmtree(target_path)
+            return f"Successfully deleted directory '{file_path}' and all its contents."
+        else:
+            return f"Error: Path '{file_path}' is neither a file nor a directory."
     except Exception as e:
-        return f"Error deleting file: {str(e)}"
+        return f"Error deleting path: {str(e)}"
 
 
 def create_directory(dir_path: str) -> str:
@@ -159,25 +164,25 @@ def create_directory(dir_path: str) -> str:
 def create_filesystem_tools() -> List[Tool]:
     """Create and return filesystem tools."""
     return [
-        Tool(
+        StructuredTool(
             name="list_directory",
             func=list_directory,
             description="List files and directories in a specified path. Input: directory path (default: current directory)",
             args_schema=ListDirectoryInput,
         ),
-        Tool(
+        StructuredTool(
             name="read_file",
             func=read_file,
             description="Read and return the contents of a file. Input: file path",
             args_schema=ReadFileInput,
         ),
-        Tool(
+        StructuredTool(
             name="write_file",
             func=write_file,
             description="Write content to a file, creating it if it doesn't exist. Inputs: file path, content",
             args_schema=WriteFileInput,
         ),
-        Tool(
+        StructuredTool(
             name="append_file",
             func=append_file,
             description="Append content to an existing file. Inputs: file path, content",
@@ -188,13 +193,13 @@ def create_filesystem_tools() -> List[Tool]:
             func=get_current_directory,
             description="Get the current working directory. No input required.",
         ),
-        Tool(
+        StructuredTool(
             name="delete_file",
             func=delete_file,
-            description="Delete a file. Input: file path",
+            description="Delete a file or directory (including all contents if directory). Input: file or directory path",
             args_schema=DeleteFileInput,
         ),
-        Tool(
+        StructuredTool(
             name="create_directory",
             func=create_directory,
             description="Create a new directory. Input: directory path",
