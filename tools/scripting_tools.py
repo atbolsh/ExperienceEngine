@@ -8,7 +8,7 @@ import subprocess
 from pathlib import Path
 from typing import List
 
-from langchain.tools import Tool
+from langchain.tools import Tool, StructuredTool
 from langchain.pydantic_v1 import BaseModel, Field
 
 
@@ -251,13 +251,13 @@ def delete_script(script_name: str) -> str:
 def create_scripting_tools() -> List[Tool]:
     """Create and return scripting tools."""
     return [
-        Tool(
+        StructuredTool(
             name="write_script",
             func=write_script,
             description="Write a new Python script to the scripts/ directory. Inputs: script_name (string, e.g., 'my_script.py'), script_content (string, complete Python code)",
             args_schema=WriteScriptInput,
         ),
-        Tool(
+        StructuredTool(
             name="execute_script",
             func=execute_script,
             description="Execute a Python script from the scripts/ directory. Inputs: script_name (string, e.g., 'my_script.py'), args (optional string, command-line arguments)",
@@ -268,13 +268,13 @@ def create_scripting_tools() -> List[Tool]:
             func=list_scripts,
             description="List all Python scripts available in the scripts/ directory. No input required.",
         ),
-        Tool(
+        StructuredTool(
             name="read_script",
             func=read_script,
             description="Read the contents of a script from the scripts/ directory. Input: script_name (string, e.g., 'my_script.py')",
             args_schema=ReadScriptInput,
         ),
-        Tool(
+        StructuredTool(
             name="delete_script",
             func=delete_script,
             description="Delete a script from the scripts/ directory. Input: script_name (string, e.g., 'my_script.py')",

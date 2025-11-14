@@ -48,10 +48,13 @@ def query_memory_store(doc_type: str, query: str, k: int = 4) -> str:
     return output
 
 
-def refresh_all_vector_stores() -> str:
+def refresh_all_vector_stores(dummy_input: str = "") -> str:
     """
     Refresh all vector stores to pick up new or modified documents.
     Use this after adding or modifying documents in the semantic, procedural, or episodic directories.
+    
+    Args:
+        dummy_input: Unused parameter (for LangChain Tool compatibility)
     """
     if vector_store_manager is None:
         return "Error: Vector store manager not initialized."

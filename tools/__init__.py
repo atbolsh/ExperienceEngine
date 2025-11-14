@@ -15,6 +15,7 @@ from tools.episodic_tools import create_episodic_tools
 from tools.thinking_tools import create_thinking_tools
 from tools.scripting_tools import create_scripting_tools
 from tools.image_tools import create_image_tools
+from tools.memory_writing_tools import create_memory_writing_tools
 
 
 def create_tools() -> List[Tool]:
@@ -33,6 +34,9 @@ def create_tools() -> List[Tool]:
     tools.extend(create_semantic_tools())
     tools.extend(create_procedural_tools())
     tools.extend(create_episodic_tools())
+    
+    # Add memory writing tools
+    tools.extend(create_memory_writing_tools())
     
     # Add scripting tools
     tools.extend(create_scripting_tools())

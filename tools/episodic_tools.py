@@ -5,7 +5,7 @@ Provides tools for querying detailed records of past interactions.
 
 from typing import List
 
-from langchain.tools import Tool
+from langchain.tools import Tool, StructuredTool
 from langchain.pydantic_v1 import BaseModel, Field
 
 from tools.memory_tools import query_memory_store
@@ -32,7 +32,7 @@ def query_episodic_memory(query: str, k: int = 4) -> str:
 def create_episodic_tools() -> List[Tool]:
     """Create and return episodic memory tools."""
     return [
-        Tool(
+        StructuredTool(
             name="query_episodic_memory",
             func=query_episodic_memory,
             description="Query episodic memory for detailed records of past interactions and experiences. Use when you need to recall specific past events. Memories may contain images - check metadata. Inputs: query (required), k (optional, default 4)",

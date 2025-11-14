@@ -7,7 +7,7 @@ import base64
 from pathlib import Path
 from typing import List, Optional
 
-from langchain.tools import Tool
+from langchain.tools import Tool, StructuredTool
 from langchain.pydantic_v1 import BaseModel, Field
 from langchain_openai import ChatOpenAI
 import os
@@ -226,19 +226,19 @@ Please analyze the image in the context of the memory text and answer the questi
 def create_image_tools() -> List[Tool]:
     """Create and return image retrieval and analysis tools."""
     return [
-        Tool(
+        StructuredTool(
             name="list_memory_images",
             func=list_memory_images,
             description="List all images available in a specific memory folder. Use when you want to see what images are associated with a memory. Inputs: memory_type (string: 'semantic', 'procedural', or 'episodic'), memory_name (string: name of the memory folder)",
             args_schema=ListMemoryImagesInput,
         ),
-        Tool(
+        StructuredTool(
             name="retrieve_memory_image",
             func=retrieve_memory_image,
             description="Get information about a specific image from a memory folder (path, size, etc). Inputs: memory_type, memory_name, image_name",
             args_schema=RetrieveMemoryImageInput,
         ),
-        Tool(
+        StructuredTool(
             name="analyze_memory_image",
             func=analyze_memory_image,
             description="Analyze an image from a memory folder using vision AI in the context of the memory's text. Use when you need to understand visual content to answer a question. Inputs: memory_type, memory_name, image_name, question (what you want to know about the image)",

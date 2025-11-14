@@ -5,7 +5,7 @@ Provides tools for querying step-by-step instructions and how-to guides.
 
 from typing import List
 
-from langchain.tools import Tool
+from langchain.tools import Tool, StructuredTool
 from langchain.pydantic_v1 import BaseModel, Field
 
 from tools.memory_tools import query_memory_store
@@ -32,7 +32,7 @@ def query_procedural_memory(query: str, k: int = 4) -> str:
 def create_procedural_tools() -> List[Tool]:
     """Create and return procedural memory tools."""
     return [
-        Tool(
+        StructuredTool(
             name="query_procedural_memory",
             func=query_procedural_memory,
             description="Query procedural memory for step-by-step instructions and how-to guides. Use when you need to know HOW to do something. Memories may contain images - check metadata. Inputs: query (required), k (optional, default 4)",

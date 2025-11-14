@@ -5,7 +5,7 @@ Provides tools for querying descriptive information and concepts.
 
 from typing import List
 
-from langchain.tools import Tool
+from langchain.tools import Tool, StructuredTool
 from langchain.pydantic_v1 import BaseModel, Field
 
 from tools.memory_tools import query_memory_store
@@ -32,7 +32,7 @@ def query_semantic_memory(query: str, k: int = 4) -> str:
 def create_semantic_tools() -> List[Tool]:
     """Create and return semantic memory tools."""
     return [
-        Tool(
+        StructuredTool(
             name="query_semantic_memory",
             func=query_semantic_memory,
             description="Query semantic memory for descriptive information, concepts, and definitions. Use when you need to understand WHAT something is. Memories may contain images - check metadata. Inputs: query (required), k (optional, default 4)",
