@@ -1,0 +1,31 @@
+# How to Add New Documents to Memory
+
+1. Navigate to the appropriate directory:
+   - `semantic/` for descriptive knowledge
+   - `procedural/` for how-to guides
+   - `episodic/` for experience records
+
+2. Create a new subdirectory with a descriptive name (eg 'semantic/what_is_AI')
+
+3. Create a guide.txt file inside that subdirectory
+
+4. After adding documents, refresh the vector stores:
+   - Ask the agent to refresh vector stores
+   - Or manually run the refresh_vector_stores tool
+
+4. The new documents will now be searchable by the agent
+
+## How to Query Specific Memory Types
+
+To retrieve information from a specific memory type:
+
+1. **For conceptual understanding** - The agent will query semantic memory
+   - Example: "What is a neural network?"
+
+2. **For step-by-step instructions** - The agent will query procedural memory
+   - Example: "How do I set up the development environment?"
+
+3. **For past experiences** - The agent will query episodic memory
+   - Example: "What happened last time we tried this approach?"
+
+

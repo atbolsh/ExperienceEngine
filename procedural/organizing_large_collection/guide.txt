@@ -1,0 +1,8 @@
+# How to Organize Large Document Collections
+
+1. Create subdirectories within semantic/procedural/episodic
+2. Group related documents together
+3. Use clear, descriptive filenames
+4. Keep individual files focused on specific topics
+5. Refresh vector stores after reorganization
+
