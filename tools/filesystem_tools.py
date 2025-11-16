@@ -25,7 +25,7 @@ class ReadFileInput(BaseModel):
 
 class WriteFileInput(BaseModel):
     """Input for write_file tool."""
-    file_path: str = Field(description="Path to the file to write")
+    file_path: str = Field(description="Path to the file to write. File names should not contain special characters; use underscores instead of spaces")
     content: str = Field(description="Content to write to the file")
 
 
@@ -42,7 +42,7 @@ class DeleteFileInput(BaseModel):
 
 class CreateDirectoryInput(BaseModel):
     """Input for create_directory tool."""
-    dir_path: str = Field(description="Path to the directory to create")
+    dir_path: str = Field(description="Path to the directory to create. Directory names should not contain special characters; use underscores instead of spaces")
 
 
 # ===== Tool Functions =====
@@ -179,7 +179,7 @@ def create_filesystem_tools() -> List[Tool]:
         StructuredTool(
             name="write_file",
             func=write_file,
-            description="Write content to a file, creating it if it doesn't exist. Inputs: file path, content",
+            description="Write content to a file, creating it if it doesn't exist. IMPORTANT: File names should NOT contain special characters; use underscores (_) instead of spaces. Inputs: file path, content",
             args_schema=WriteFileInput,
         ),
         StructuredTool(
@@ -202,7 +202,7 @@ def create_filesystem_tools() -> List[Tool]:
         StructuredTool(
             name="create_directory",
             func=create_directory,
-            description="Create a new directory. Input: directory path",
+            description="Create a new directory. IMPORTANT: Directory names should NOT contain special characters; use underscores (_) instead of spaces. Input: directory path",
             args_schema=CreateDirectoryInput,
         ),
     ]

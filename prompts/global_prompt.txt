@@ -5,6 +5,10 @@ should be in 'procedural' memory. Feel free to make new memories as you go along
 session, reflect on the entire experience so far, record the episodic memory, and possibly extract lessons into
 procedural memory, and facts into semantic memory.
 
+If you are stuck, or already made a mistake, start using your memories. Query semantic memory about any relevant
+objects. Try procedural for the task you're trying to complete. Look up episodic memory in case you've seen this sort
+of situation before, and how you managed to handle it last time.
+
 **Available Capabilities:**
 
 1. **Memory Systems**: You have access to three types of long-term memory:

@@ -21,7 +21,7 @@ EPISODIC_DIR = Path("episodic")
 
 class WriteMemoryInput(BaseModel):
     """Input for memory writing tools."""
-    memory_name: str = Field(description="Name of the memory folder to create")
+    memory_name: str = Field(description="Name of the memory folder to create. Should NOT contain special characters; use underscores (_) instead of spaces")
     content: str = Field(description="Text content to write to the memory's guide.txt file")
 
 
@@ -131,19 +131,19 @@ def create_memory_writing_tools() -> List[Tool]:
         StructuredTool(
             name="write_semantic_memory",
             func=write_semantic_memory,
-            description="Create a new semantic memory for storing descriptive information, concepts, and definitions. Use when you need to remember WHAT something is. After creating, use refresh_vector_stores to make it searchable. Inputs: memory_name (string, name for the memory folder), content (string, text content for guide.txt)",
+            description="Create a new semantic memory for storing descriptive information, concepts, and definitions. Use when you need to remember WHAT something is. IMPORTANT: Memory names should NOT contain special characters; use underscores (_) instead of spaces. After creating, use refresh_vector_stores to make it searchable. Inputs: memory_name (string, name for the memory folder), content (string, text content for guide.txt)",
             args_schema=WriteMemoryInput,
         ),
         StructuredTool(
             name="write_procedural_memory",
             func=write_procedural_memory,
-            description="Create a new procedural memory for storing step-by-step instructions and how-to guides. Use when you need to remember HOW to do something. After creating, use refresh_vector_stores to make it searchable. Inputs: memory_name (string, name for the memory folder), content (string, text content for guide.txt)",
+            description="Create a new procedural memory for storing step-by-step instructions and how-to guides. Use when you need to remember HOW to do something. IMPORTANT: Memory names should NOT contain special characters; use underscores (_) instead of spaces. After creating, use refresh_vector_stores to make it searchable. Inputs: memory_name (string, name for the memory folder), content (string, text content for guide.txt)",
             args_schema=WriteMemoryInput,
         ),
         StructuredTool(
             name="write_episodic_memory",
             func=write_episodic_memory,
-            description="Create a new episodic memory for storing detailed records of past interactions and experiences. Use when you need to remember specific events. After creating, use refresh_vector_stores to make it searchable. Inputs: memory_name (string, name for the memory folder), content (string, text content for guide.txt)",
+            description="Create a new episodic memory for storing detailed records of past interactions and experiences. Use when you need to remember specific events. IMPORTANT: Memory names should NOT contain special characters; use underscores (_) instead of spaces. After creating, use refresh_vector_stores to make it searchable. Inputs: memory_name (string, name for the memory folder), content (string, text content for guide.txt)",
             args_schema=WriteMemoryInput,
         ),
     ]
