@@ -3,6 +3,7 @@ Tools package for the Experience Engine agent.
 Aggregates all tools from different modules.
 """
 
+import sys
 from typing import List
 
 from langchain.tools import Tool
@@ -17,6 +18,8 @@ from tools.scripting_tools import create_scripting_tools
 from tools.image_tools import create_image_tools
 from tools.memory_writing_tools import create_memory_writing_tools
 from tools.session_tools import create_session_tools
+from tools.tool_writing_tools import create_tool_writing_tools
+from tools.image_processing_tools import create_image_processing_tools
 
 
 def create_tools() -> List[Tool]:
@@ -48,8 +51,16 @@ def create_tools() -> List[Tool]:
     # Add thinking tools
     tools.extend(create_thinking_tools())
     
+    # Add tool writing capability
+    tools.extend(create_tool_writing_tools())
+    
     # Add session control tools
     tools.extend(create_session_tools())
+    
+    # === CUSTOM TOOLS SECTION (auto-generated tools will be added below) ===
+    # Add custom tool: draw_line_to_closest_dot
+    tools.extend(create_image_processing_tools())
+    
     
     # Add utility tool for refreshing vector stores
     tools.append(

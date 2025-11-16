@@ -1,0 +1,6 @@
+1. Load the image using CV2.
+2. Detect the green circle and gold dots within the image.
+3. Calculate the distance between the center of the green circle and each gold dot.
+4. Identify the closest gold dot to the green circle.
+5. Draw a thick blue line from the center of the green circle to the closest gold dot.
+6. Save or display the modified image.

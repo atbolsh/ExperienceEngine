@@ -49,16 +49,19 @@ def main():
     
     while True:  # Outer loop for restart functionality
         print("=" * 60)
-        print("Experience Engine Agent")
+        print("Experience Engine - Autonomous Exploration Agent")
         print("=" * 60)
-        print("\nInitializing agent...")
+        print("\nInitializing exploration agent...")
         
         # Create agent with memory
         agent, message_history = create_conversational_agent()
         
-        print("\nAgent initialized! Type 'exit' or 'quit' to end the conversation.")
-        print("Type 'clear' to clear conversation history.")
-        print("The agent can also choose to end or restart the session using its tools.")
+        print("\nAgent ready to explore!")
+        print("\nThis agent is designed to autonomously explore its environment,")
+        print("discover new information, and record insights in its memory systems.")
+        print("You can guide and give hints, but the agent drives the exploration.")
+        print("\nCommands: 'exit'/'quit' to end | 'clear' to reset history")
+        print("The agent can also end or restart sessions using its tools.")
         print("=" * 60)
         print()
         

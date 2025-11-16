@@ -1,0 +1,1 @@
+In this session, a Python script was developed to draw a blue line from a green circle to the closest gold dot in an image using the CV2 library. The script was further transformed into a reusable tool for future use. The user emphasized the importance of keeping the script intact and not deleting it.
