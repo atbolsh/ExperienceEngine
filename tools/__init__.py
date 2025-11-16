@@ -13,6 +13,7 @@ from tools.filesystem_tools import create_filesystem_tools
 from tools.semantic_tools import create_semantic_tools
 from tools.procedural_tools import create_procedural_tools
 from tools.episodic_tools import create_episodic_tools
+from tools.working_tools import create_working_tools
 from tools.thinking_tools import create_thinking_tools
 from tools.scripting_tools import create_scripting_tools
 from tools.image_tools import create_image_tools
@@ -20,6 +21,7 @@ from tools.memory_writing_tools import create_memory_writing_tools
 from tools.session_tools import create_session_tools
 from tools.tool_writing_tools import create_tool_writing_tools
 from tools.image_processing_tools import create_image_processing_tools
+from tools.game_tools import create_game_tools
 
 
 def create_tools() -> List[Tool]:
@@ -27,7 +29,7 @@ def create_tools() -> List[Tool]:
     Create and return all tools for the agent.
     
     Returns:
-        List of all available tools (filesystem + memory + scripting + thinking + utility)
+        List of all available tools (filesystem + memory + scripting + thinking + utility + game)
     """
     tools = []
     
@@ -38,6 +40,7 @@ def create_tools() -> List[Tool]:
     tools.extend(create_semantic_tools())
     tools.extend(create_procedural_tools())
     tools.extend(create_episodic_tools())
+    tools.extend(create_working_tools())
     
     # Add memory writing tools
     tools.extend(create_memory_writing_tools())
@@ -57,6 +60,9 @@ def create_tools() -> List[Tool]:
     # Add session control tools
     tools.extend(create_session_tools())
     
+    # Add game environment tools
+    tools.extend(create_game_tools())
+    
     # === CUSTOM TOOLS SECTION (auto-generated tools will be added below) ===
     # Add custom tool: draw_line_to_closest_dot
     tools.extend(create_image_processing_tools())
@@ -67,7 +73,7 @@ def create_tools() -> List[Tool]:
         Tool(
             name="refresh_vector_stores",
             func=refresh_all_vector_stores,
-            description="Refresh all vector stores to pick up new or modified documents. Use after adding or modifying files in semantic, procedural, or episodic directories. No input required.",
+            description="Refresh all vector stores to pick up new or modified documents. Use after adding or modifying files in semantic, procedural, episodic, or working directories. No input required.",
         )
     )
     

@@ -13,6 +13,9 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 
 from tools import create_tools, initialize_vector_store_manager
 
+# Initialize game environment
+import init_game
+
 
 def create_agent():
     """Create and configure the agent with tools and memory."""
@@ -23,7 +26,7 @@ def create_agent():
     
     # Create the LLM
     llm = ChatOpenAI(
-        model="gpt-4o",
+        model="gpt-5",
         temperature=0.7,
         api_key=os.getenv("OPENAI_API_KEY")
     )

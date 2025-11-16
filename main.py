@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 
 from agent import create_conversational_agent
 from tools.session_tools import get_session_control_signal, reset_session_control_signal
+from tools.memory_tools import clear_working_memory
 
 
 # Load environment variables
@@ -40,6 +41,11 @@ def run_closing_sequence(agent, session_id: str, reason: str = "User ended the s
         print(f"{'=' * 60}\n")
     except Exception as e:
         print(f"Error during closing sequence: {str(e)}\n")
+    
+    # Clear working memory at the end of the session
+    print("Clearing working memory...")
+    clear_working_memory()
+    print("Working memory cleared.\n")
 
 
 def main():

@@ -48,10 +48,15 @@ def query_memory_store(doc_type: str, query: str, k: int = 4) -> str:
     return output
 
 
+def get_vector_store_manager() -> Optional[VectorStoreManager]:
+    """Get the global vector store manager instance."""
+    return vector_store_manager
+
+
 def refresh_all_vector_stores(dummy_input: str = "") -> str:
     """
     Refresh all vector stores to pick up new or modified documents.
-    Use this after adding or modifying documents in the semantic, procedural, or episodic directories.
+    Use this after adding or modifying documents in the semantic, procedural, episodic, or working directories.
     
     Args:
         dummy_input: Unused parameter (for LangChain Tool compatibility)
@@ -63,7 +68,23 @@ def refresh_all_vector_stores(dummy_input: str = "") -> str:
         vector_store_manager.refresh_store("semantic")
         vector_store_manager.refresh_store("procedural")
         vector_store_manager.refresh_store("episodic")
+        vector_store_manager.refresh_store("working")
         return "Successfully refreshed all vector stores."
     except Exception as e:
         return f"Error refreshing vector stores: {str(e)}"
+
+
+def clear_working_memory():
+    """
+    Clear all contents from working memory.
+    This is called automatically at the end of each session.
+    """
+    if vector_store_manager is None:
+        print("Warning: Vector store manager not initialized.")
+        return
+    
+    try:
+        vector_store_manager.clear_working_memory()
+    except Exception as e:
+        print(f"Error clearing working memory: {str(e)}")
 
