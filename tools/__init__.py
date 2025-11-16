@@ -8,11 +8,12 @@ from typing import List
 
 from langchain.tools import Tool
 
-from tools.memory_tools import initialize_vector_store_manager, refresh_all_vector_stores
+from tools.memory_tools import initialize_vector_store_manager, refresh_all_vector_stores, clear_working_memory_function
 from tools.filesystem_tools import create_filesystem_tools
 from tools.semantic_tools import create_semantic_tools
 from tools.procedural_tools import create_procedural_tools
 from tools.episodic_tools import create_episodic_tools
+from tools.working_tools import create_working_tools
 from tools.thinking_tools import create_thinking_tools
 from tools.scripting_tools import create_scripting_tools
 from tools.image_tools import create_image_tools
@@ -20,6 +21,7 @@ from tools.memory_writing_tools import create_memory_writing_tools
 from tools.session_tools import create_session_tools
 from tools.tool_writing_tools import create_tool_writing_tools
 from tools.image_processing_tools import create_image_processing_tools
+from tools.robot_tools import create_robot_tools
 
 
 def create_tools() -> List[Tool]:
@@ -38,6 +40,7 @@ def create_tools() -> List[Tool]:
     tools.extend(create_semantic_tools())
     tools.extend(create_procedural_tools())
     tools.extend(create_episodic_tools())
+    tools.extend(create_working_tools())
     
     # Add memory writing tools
     tools.extend(create_memory_writing_tools())
@@ -61,6 +64,8 @@ def create_tools() -> List[Tool]:
     # Add custom tool: draw_line_to_closest_dot
     tools.extend(create_image_processing_tools())
     
+    # Add robot interaction tools
+    tools.extend(create_robot_tools())
     
     # Add utility tool for refreshing vector stores
     tools.append(
@@ -78,5 +83,6 @@ def create_tools() -> List[Tool]:
 __all__ = [
     'create_tools',
     'initialize_vector_store_manager',
+    'clear_working_memory_function',
 ]
 

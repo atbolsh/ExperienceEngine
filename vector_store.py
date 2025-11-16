@@ -30,15 +30,18 @@ class VectorStoreManager:
         self.semantic_store: Optional[FAISS] = None
         self.procedural_store: Optional[FAISS] = None
         self.episodic_store: Optional[FAISS] = None
+        self.working_store: Optional[FAISS] = None
         
         # Paths for persisted indices
         self.semantic_path = self.base_path / "semantic"
         self.procedural_path = self.base_path / "procedural"
         self.episodic_path = self.base_path / "episodic"
+        self.working_path = self.base_path / "working"
         
         self.semantic_index_path = self.base_path / ".faiss_semantic"
         self.procedural_index_path = self.base_path / ".faiss_procedural"
         self.episodic_index_path = self.base_path / ".faiss_episodic"
+        self.working_index_path = self.base_path / ".faiss_working"
     
     def load_documents_from_directory(self, directory: Path) -> List[Document]:
         """
@@ -92,6 +95,9 @@ class VectorStoreManager:
         elif doc_type == "episodic":
             directory = self.episodic_path
             index_path = self.episodic_index_path
+        elif doc_type == "working":
+            directory = self.working_path
+            index_path = self.working_index_path
         else:
             raise ValueError(f"Unknown document type: {doc_type}")
         
@@ -131,11 +137,12 @@ class VectorStoreManager:
         return vector_store
     
     def initialize_all_stores(self):
-        """Initialize all three vector stores."""
+        """Initialize all vector stores including working memory."""
         print("Initializing vector stores...")
         self.semantic_store = self.create_or_load_vector_store("semantic")
         self.procedural_store = self.create_or_load_vector_store("procedural")
         self.episodic_store = self.create_or_load_vector_store("episodic")
+        self.working_store = self.create_or_load_vector_store("working")
         print("Vector stores initialized.")
     
     def refresh_store(self, doc_type: str):
@@ -146,6 +153,8 @@ class VectorStoreManager:
             index_path = self.procedural_index_path
         elif doc_type == "episodic":
             index_path = self.episodic_index_path
+        elif doc_type == "working":
+            index_path = self.working_index_path
         else:
             raise ValueError(f"Unknown document type: {doc_type}")
         
@@ -164,6 +173,8 @@ class VectorStoreManager:
             self.procedural_store = new_store
         elif doc_type == "episodic":
             self.episodic_store = new_store
+        elif doc_type == "working":
+            self.working_store = new_store
     
     def query_store(self, doc_type: str, query: str, k: int = 4) -> List[Document]:
         """Query a specific vector store and return relevant documents."""
@@ -173,6 +184,8 @@ class VectorStoreManager:
             store = self.procedural_store
         elif doc_type == "episodic":
             store = self.episodic_store
+        elif doc_type == "working":
+            store = self.working_store
         else:
             raise ValueError(f"Unknown document type: {doc_type}")
         
@@ -185,4 +198,25 @@ class VectorStoreManager:
         except Exception as e:
             print(f"Error querying {doc_type} store: {e}")
             return []
+    
+    def clear_working_memory(self):
+        """Clear all contents of working memory directory and refresh the store."""
+        import shutil
+        
+        # Clear the working directory
+        if self.working_path.exists():
+            for item in self.working_path.iterdir():
+                if item.is_dir():
+                    shutil.rmtree(item)
+                else:
+                    item.unlink()
+            print(f"Cleared working memory directory: {self.working_path}")
+        
+        # Clear the working index
+        if self.working_index_path.exists():
+            shutil.rmtree(self.working_index_path)
+        
+        # Reset the working store
+        self.working_store = None
+        print("Working memory cleared.")
 

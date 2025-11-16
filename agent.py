@@ -23,7 +23,7 @@ def create_agent():
     
     # Create the LLM
     llm = ChatOpenAI(
-        model="gpt-4o",
+        model="gpt-5",
         temperature=0.7,
         api_key=os.getenv("OPENAI_API_KEY")
     )
