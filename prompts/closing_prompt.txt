@@ -1,0 +1,10 @@
+The session is ending. Before we close, please take a moment to:
+
+1. Reflect on the entire session and any important experiences or discoveries
+2. Record any significant episodic memories from this session
+3. Extract any new facts that should be stored in semantic memory
+4. Document any step-by-step procedures that should be saved in procedural memory
+5. Share any final thoughts or insights that would be valuable for the user
+
+Please think about what was learned, what was surprising, and what might be useful to remember for future sessions.
+

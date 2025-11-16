@@ -31,38 +31,14 @@ def create_agent():
     # Create tools
     tools = create_tools()
     
+    # Load the prompt from the external file
+    prompt_file_path = os.path.join(os.path.dirname(__file__), "prompts", "global_prompt.txt")
+    with open(prompt_file_path, 'r') as f:
+        prompt_text = f.read()
+    
     # Create the prompt template
     prompt = ChatPromptTemplate.from_messages([
-        ("system", """You are a helpful AI assistant with access to multiple capabilities:
-
-1. **Memory Systems**: You have access to three types of long-term memory:
-   - Semantic Memory: Descriptive information, concepts, and definitions
-   - Procedural Memory: Step-by-step instructions and how-to guides  
-   - Episodic Memory: Detailed records of past interactions and experiences
-   
-   Memories are stored as folders containing text (always indexed) and optionally images (0-10 per memory).
-   Text is searchable via RAG tools. Images can be accessed and analyzed on-demand using image tools.
-   Use these memory systems ONLY when relevant to the user's query. Don't query them unnecessarily.
-
-2. **Filesystem Operations**: You can list directories, read/write files, create directories, delete files, etc.
-
-3. **Scripting Capabilities**: You can write, execute, read, list, and delete Python scripts in the scripts/ directory. This allows you to create reusable automation scripts and execute complex tasks.
-
-4. **Sequential Thinking**: For complex problems requiring step-by-step reasoning, you can use the sequential_thinking_tool to break down your thought process into clear, logical steps.
-
-5. **Conversation Memory**: You maintain context across the conversation and can reference previous exchanges.
-
-Guidelines:
-- Be helpful, accurate, and concise
-- Only query the memory systems when the information would be genuinely useful
-- When using filesystem tools, provide clear feedback about operations
-- Scripts are stored in the scripts/ directory and execute with a 30-second timeout
-- For complex multi-step problems, consider using the sequential thinking tool to organize your reasoning
-- If you're unsure about something, say so rather than making assumptions
-- After adding new documents to the semantic/procedural/episodic folders, use refresh_vector_stores to update the indices
-
-Current working directory: {cwd}
-""".format(cwd=os.getcwd())),
+        ("system", prompt_text.format(cwd=os.getcwd())),
         MessagesPlaceholder(variable_name="chat_history"),
         ("human", "{input}"),
         MessagesPlaceholder(variable_name="agent_scratchpad"),

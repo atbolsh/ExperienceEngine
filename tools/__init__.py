@@ -16,6 +16,7 @@ from tools.thinking_tools import create_thinking_tools
 from tools.scripting_tools import create_scripting_tools
 from tools.image_tools import create_image_tools
 from tools.memory_writing_tools import create_memory_writing_tools
+from tools.session_tools import create_session_tools
 
 
 def create_tools() -> List[Tool]:
@@ -46,6 +47,9 @@ def create_tools() -> List[Tool]:
     
     # Add thinking tools
     tools.extend(create_thinking_tools())
+    
+    # Add session control tools
+    tools.extend(create_session_tools())
     
     # Add utility tool for refreshing vector stores
     tools.append(
