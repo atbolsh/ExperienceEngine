@@ -1,0 +1,23 @@
+Procedure: Rotate until target (e.g., dog) is detected
+
+Prereqs:
+- Robot operational with turning and camera tools.
+- Target detection method chosen: either (A) human-in-the-loop visual confirmation or (B) automated vision tool.
+- Safety: Clear surrounding area; set a maximum number of rotation steps (e.g., 24 steps of ~15° for full 360°) and define a stop command.
+
+Steps (common):
+1) Capture a baseline image (post any manual repositioning).
+2) Initialize step_count = 0; set step_limit = 24 (or appropriate for environment).
+3) Loop:
+   a) Analyze current view for target.
+      - If method A (human-in-the-loop): send image to user and ask if target is visible.
+      - If method B (automated): run vision detection on the latest camera image.
+   b) If target detected: announce success and stop.
+   c) Else: turn_robot_right (default step), then capture_robot_image.
+   d) Increment step_count; if step_count >= step_limit: stop and report target not found.
+4) At any point, if hazards or unexpected motion occur, call stop_robot_motion and reassess.
+
+Notes:
+- Re-capture after any external repositioning by the user to realign expectations.
+- Keep images and decisions in working memory during the loop; persist important findings to long-term memory if needed.
+- Adjust step size and limit based on camera FOV and required precision.

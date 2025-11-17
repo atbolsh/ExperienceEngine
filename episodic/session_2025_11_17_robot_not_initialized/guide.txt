@@ -1,0 +1,18 @@
+Context: Short session focused on using the robot car.
+
+Timeline:
+- User asked what the robot was “staring at.”
+- I attempted to use the robot camera but found the robot system was not initialized; image capture failed, and I requested a restart/initialization of the robot controller/app.
+- User then asked me to “move forward a little.”
+- Movement attempt also failed with the same issue: the robot car was not initialized.
+
+Observations:
+- Both camera and motion commands failed because the robot controller was not running.
+- The interface reports the same failure mode string when uninitialized: “Robot car not initialized.”
+
+Surprises:
+- There is no separate status/ping tool; readiness must be inferred from success/failure of camera or motion calls.
+
+Takeaways:
+- Before any action, verify readiness by attempting a non-invasive check (e.g., capture_robot_image). If it fails with the known error, prompt the user to initialize the robot controller.
+- After initialization, perform a quick camera snapshot to confirm readiness, then proceed with requested movement in small increments with frequent snapshots.

@@ -1,0 +1,5 @@
+Facts:
+- The robot car interface can return the error message: “Robot car not initialized.”
+- When the robot is not initialized, both camera capture and motion commands fail.
+- There is no explicit readiness probe tool; readiness must be inferred from successful tool calls (e.g., capture_robot_image) or from the absence of the initialization error.
+- Initialization is handled outside of this agent; the user or external system must start/restart the robot controller/app.

@@ -1,0 +1,6 @@
+Facts:
+- Available robot tools: capture_robot_image, move_robot_forward/backward, turn_robot_left/right, stop_robot_motion.
+- Images captured by the robot are stored in working memory; working memory is cleared at session end unless transferred to long-term memory.
+- Current toolset lacks an automatic vision analysis tool for detecting objects (e.g., dogs) in newly captured robot images. The vision tool can analyze images only when they are stored in semantic/procedural/episodic memories, not the working camera stream.
+- The user plans to add a vision detection tool in a future session.
+- Safety consideration: When rotating or moving continuously, maintain the ability to stop immediately; prefer stepwise movement with regular captures in unknown environments.

@@ -4,20 +4,53 @@ Provides interface to the physical robot's movement and camera systems.
 """
 
 import os
+import sys
 import cv2
-from typing import List
+import time
+from typing import List, Optional
 from langchain.tools import Tool
+
+# Add utils to path and import Car
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+from utils.car import Car
+
+# Global car instance
+car_instance: Optional[Car] = None
 
 # Latest captured image
 _latest_image = None
 
 
+def initialize_car():
+    """Initialize the global robot car instance."""
+    global car_instance
+    try:
+        print("Initializing robot car connection...")
+        car_instance = Car()
+        car_instance.start()
+        print("Robot car connected successfully.")
+    except Exception as e:
+        print(f"Warning: Could not connect to robot car: {e}")
+        print("Robot tools will be available but may not function properly.")
+
+
+def close_car():
+    """Close the robot car connection."""
+    global car_instance
+    if car_instance is not None:
+        try:
+            print("Closing robot car connection...")
+            car_instance.close()
+            print("Robot car connection closed.")
+        except Exception as e:
+            print(f"Error closing robot car: {str(e)}")
+
+
 def get_car_instance():
-    """Get the global car instance from main module."""
-    import main
-    if main.car_instance is None:
+    """Get the global car instance."""
+    if car_instance is None:
         raise RuntimeError("Robot car not initialized. Please restart the application.")
-    return main.car_instance
+    return car_instance
 
 
 def capture_robot_image(dummy_input: str = "") -> str:
@@ -50,12 +83,12 @@ def capture_robot_image(dummy_input: str = "") -> str:
         return f"Error capturing image: {str(e)}"
 
 
-def turn_robot_left(angle_str: str = "15") -> str:
+def turn_robot_left(mode: str = "default") -> str:
     """
-    Turn the robot left by a specified angle.
+    Turn the robot left.
     
     Args:
-        angle_str: Angle in degrees to turn (default: 15). Use "continuous" to turn continuously until stopped.
+        mode: "default" for 2-second turn with auto-stop, or "continuous" to turn until manually stopped.
         
     Returns:
         Status message
@@ -63,25 +96,24 @@ def turn_robot_left(angle_str: str = "15") -> str:
     try:
         car = get_car_instance()
         
-        if angle_str.lower() == "continuous":
-            car.left()
+        if mode.lower() == "continuous":
+            car.left(speed=20)
             return "Robot is now turning left continuously. Use stop_motion to halt."
         else:
-            angle = float(angle_str)
-            car.left(angle=angle)
-            return f"Robot turned left by {angle} degrees."
-    except ValueError:
-        return f"Invalid angle: {angle_str}. Please provide a number or 'continuous'."
+            car.left(speed=20)
+            time.sleep(2)
+            car.stop()
+            return "Robot turned left for 2 seconds."
     except Exception as e:
         return f"Error turning left: {str(e)}"
 
 
-def turn_robot_right(angle_str: str = "15") -> str:
+def turn_robot_right(mode: str = "default") -> str:
     """
-    Turn the robot right by a specified angle.
+    Turn the robot right.
     
     Args:
-        angle_str: Angle in degrees to turn (default: 15). Use "continuous" to turn continuously until stopped.
+        mode: "default" for 2-second turn with auto-stop, or "continuous" to turn until manually stopped.
         
     Returns:
         Status message
@@ -89,25 +121,24 @@ def turn_robot_right(angle_str: str = "15") -> str:
     try:
         car = get_car_instance()
         
-        if angle_str.lower() == "continuous":
-            car.right()
+        if mode.lower() == "continuous":
+            car.right(speed=20)
             return "Robot is now turning right continuously. Use stop_motion to halt."
         else:
-            angle = float(angle_str)
-            car.right(angle=angle)
-            return f"Robot turned right by {angle} degrees."
-    except ValueError:
-        return f"Invalid angle: {angle_str}. Please provide a number or 'continuous'."
+            car.right(speed=20)
+            time.sleep(2)
+            car.stop()
+            return "Robot turned right for 2 seconds."
     except Exception as e:
         return f"Error turning right: {str(e)}"
 
 
-def move_robot_forward(distance_str: str = "10") -> str:
+def move_robot_forward(mode: str = "default") -> str:
     """
-    Move the robot forward by a specified distance.
+    Move the robot forward.
     
     Args:
-        distance_str: Distance in centimeters to move (default: 10). Use "continuous" to move continuously until stopped.
+        mode: "default" for 2-second movement with auto-stop, or "continuous" to move until manually stopped.
         
     Returns:
         Status message
@@ -115,25 +146,24 @@ def move_robot_forward(distance_str: str = "10") -> str:
     try:
         car = get_car_instance()
         
-        if distance_str.lower() == "continuous":
-            car.forward()
+        if mode.lower() == "continuous":
+            car.forward(speed=20)
             return "Robot is now moving forward continuously. Use stop_motion to halt."
         else:
-            distance = float(distance_str)
-            car.forward(distance=distance)
-            return f"Robot moved forward {distance} cm."
-    except ValueError:
-        return f"Invalid distance: {distance_str}. Please provide a number or 'continuous'."
+            car.forward(speed=20)
+            time.sleep(2)
+            car.stop()
+            return "Robot moved forward for 2 seconds."
     except Exception as e:
         return f"Error moving forward: {str(e)}"
 
 
-def move_robot_backward(distance_str: str = "10") -> str:
+def move_robot_backward(mode: str = "default") -> str:
     """
-    Move the robot backward by a specified distance.
+    Move the robot backward.
     
     Args:
-        distance_str: Distance in centimeters to move (default: 10). Use "continuous" to move continuously until stopped.
+        mode: "default" for 2-second movement with auto-stop, or "continuous" to move until manually stopped.
         
     Returns:
         Status message
@@ -141,15 +171,14 @@ def move_robot_backward(distance_str: str = "10") -> str:
     try:
         car = get_car_instance()
         
-        if distance_str.lower() == "continuous":
-            car.backward()
+        if mode.lower() == "continuous":
+            car.backward(speed=20)
             return "Robot is now moving backward continuously. Use stop_motion to halt."
         else:
-            distance = float(distance_str)
-            car.backward(distance=distance)
-            return f"Robot moved backward {distance} cm."
-    except ValueError:
-        return f"Invalid distance: {distance_str}. Please provide a number or 'continuous'."
+            car.backward(speed=20)
+            time.sleep(2)
+            car.stop()
+            return "Robot moved backward for 2 seconds."
     except Exception as e:
         return f"Error moving backward: {str(e)}"
 
@@ -199,22 +228,22 @@ def create_robot_tools() -> List[Tool]:
         Tool(
             name="turn_robot_left",
             func=turn_robot_left,
-            description="Turn the robot left. Provide angle in degrees (default 15) or 'continuous' to turn until stopped. Example: '15' or '45' or 'continuous'"
+            description="Turn the robot left for 2 seconds at speed 20, then auto-stop. Pass 'continuous' to turn continuously until manually stopped. Example: 'default' or 'continuous'"
         ),
         Tool(
             name="turn_robot_right",
             func=turn_robot_right,
-            description="Turn the robot right. Provide angle in degrees (default 15) or 'continuous' to turn until stopped. Example: '15' or '45' or 'continuous'"
+            description="Turn the robot right for 2 seconds at speed 20, then auto-stop. Pass 'continuous' to turn continuously until manually stopped. Example: 'default' or 'continuous'"
         ),
         Tool(
             name="move_robot_forward",
             func=move_robot_forward,
-            description="Move the robot forward. Provide distance in cm (default 10) or 'continuous' to move until stopped. Example: '10' or '50' or 'continuous'"
+            description="Move the robot forward for 2 seconds at speed 20, then auto-stop. Pass 'continuous' to move continuously until manually stopped. Example: 'default' or 'continuous'"
         ),
         Tool(
             name="move_robot_backward",
             func=move_robot_backward,
-            description="Move the robot backward. Provide distance in cm (default 10) or 'continuous' to move until stopped. Example: '10' or '50' or 'continuous'"
+            description="Move the robot backward for 2 seconds at speed 20, then auto-stop. Pass 'continuous' to move continuously until manually stopped. Example: 'default' or 'continuous'"
         ),
         Tool(
             name="stop_robot_motion",

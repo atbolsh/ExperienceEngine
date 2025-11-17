@@ -21,7 +21,7 @@ from tools.memory_writing_tools import create_memory_writing_tools
 from tools.session_tools import create_session_tools
 from tools.tool_writing_tools import create_tool_writing_tools
 from tools.image_processing_tools import create_image_processing_tools
-from tools.robot_tools import create_robot_tools
+from tools.robot_tools import create_robot_tools, initialize_car, close_car
 
 
 def create_tools() -> List[Tool]:
@@ -84,5 +84,7 @@ __all__ = [
     'create_tools',
     'initialize_vector_store_manager',
     'clear_working_memory_function',
+    'initialize_car',
+    'close_car',
 ]
 

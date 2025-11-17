@@ -1,0 +1,21 @@
+Title: Checking Robot Readiness and Safe Start
+
+Purpose: Ensure the robot car is initialized and operate safely upon session start.
+
+Steps:
+1) Probe readiness non-invasively:
+   - Attempt capture_robot_image (single call).
+   - If success: proceed to step 3.
+   - If failure contains “Robot car not initialized,” request that the user start/restart the robot controller/app.
+2) After the user confirms initialization:
+   - Retry capture_robot_image to confirm readiness.
+3) Safe movement verification:
+   - Move forward briefly (default short motion), then automatically stop.
+   - Immediately capture another image to confirm motion and environment.
+4) Continue tasks with small increments:
+   - Use short moves/turns with intermittent camera checks.
+5) Safety protocol:
+   - If unexpected continuous motion occurs, call stop_robot_motion.
+   - Avoid continuous commands until environment is visually confirmed.
+6) Communication:
+   - Clearly inform the user when the robot is not initialized and what’s needed.

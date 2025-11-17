@@ -11,7 +11,7 @@ from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 
-from tools import create_tools, initialize_vector_store_manager
+from tools import create_tools, initialize_vector_store_manager, initialize_car
 
 
 def create_agent():
@@ -20,6 +20,9 @@ def create_agent():
     # Initialize vector store manager
     print("Initializing vector stores...")
     initialize_vector_store_manager()
+    
+    # Initialize robot car
+    initialize_car()
     
     # Create the LLM
     llm = ChatOpenAI(
