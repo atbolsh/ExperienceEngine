@@ -4,22 +4,14 @@ Handles the user interaction loop.
 """
 
 import os
-import sys
 from dotenv import load_dotenv
 
 from agent import create_conversational_agent
 from tools.session_tools import get_session_control_signal, reset_session_control_signal
-from tools import clear_working_memory_function
-
-# Add utils to path and import Car
-sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
-from utils.car import Car
+from tools import clear_working_memory_function, close_car
 
 # Load environment variables
 load_dotenv()
-
-# Global car instance
-car_instance = None
 
 
 def load_closing_prompt() -> str:
@@ -31,8 +23,6 @@ def load_closing_prompt() -> str:
 
 def run_closing_sequence(agent, session_id: str, reason: str = "User ended the session"):
     """Run the closing sequence with the agent."""
-    global car_instance
-    
     print(f"\n{'=' * 60}")
     print(f"Closing session: {reason}")
     print(f"{'=' * 60}\n")
@@ -60,30 +50,12 @@ def run_closing_sequence(agent, session_id: str, reason: str = "User ended the s
         print(f"Error clearing working memory: {str(e)}\n")
     
     # Close the car connection
-    if car_instance is not None:
-        try:
-            print("Closing robot car connection...")
-            car_instance.close()
-            print("Robot car connection closed.\n")
-        except Exception as e:
-            print(f"Error closing robot car: {str(e)}\n")
+    close_car()
 
 
 def main():
     """Main function to run the agent."""
-    global car_instance
-    
     session_id = "default_session"
-    
-    # Initialize robot car connection
-    print("Initializing robot car connection...")
-    car_instance = Car()
-    try:
-        car_instance.start()
-        print("Robot car connected successfully.\n")
-    except Exception as e:
-        print(f"Warning: Could not connect to robot car: {e}")
-        print("Robot tools will be available but may not function properly.\n")
     
     while True:  # Outer loop for restart functionality
         print("=" * 60)
