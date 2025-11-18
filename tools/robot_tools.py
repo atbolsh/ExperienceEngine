@@ -7,6 +7,7 @@ import os
 import sys
 import cv2
 import time
+from datetime import datetime
 from typing import List, Optional
 from langchain.tools import Tool
 
@@ -74,11 +75,17 @@ def capture_robot_image(dummy_input: str = "") -> str:
         working_dir = os.path.join(os.path.dirname(__file__), '..', 'working')
         os.makedirs(working_dir, exist_ok=True)
         
-        # Save the latest image
-        img_path = os.path.join(working_dir, 'latest_capture.jpg')
+        # Save with timestamp for uniqueness
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]  # Include milliseconds
+        img_filename = f'capture_{timestamp}.jpg'
+        img_path = os.path.join(working_dir, img_filename)
         cv2.imwrite(img_path, _latest_image)
         
-        return f"Successfully captured image from robot camera. Image saved to working/latest_capture.jpg. The image is now available for analysis."
+        # Also save as latest_capture.jpg for backward compatibility
+        latest_path = os.path.join(working_dir, 'latest_capture.jpg')
+        cv2.imwrite(latest_path, _latest_image)
+        
+        return f"Successfully captured image from robot camera. Image saved to working/{img_filename} and working/latest_capture.jpg. The image is now available for analysis."
     except Exception as e:
         return f"Error capturing image: {str(e)}"
 
