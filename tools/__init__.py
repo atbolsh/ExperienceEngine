@@ -22,6 +22,7 @@ from tools.session_tools import create_session_tools
 from tools.tool_writing_tools import create_tool_writing_tools
 from tools.image_processing_tools import create_image_processing_tools
 from tools.robot_tools import create_robot_tools, initialize_car, close_car
+from tools.robot_vision_tools import create_robot_vision_tools, initialize_robot_vision_tools
 
 
 def create_tools() -> List[Tool]:
@@ -67,6 +68,9 @@ def create_tools() -> List[Tool]:
     # Add robot interaction tools
     tools.extend(create_robot_tools())
     
+    # Add robot vision analysis tools
+    tools.extend(create_robot_vision_tools())
+    
     # Add utility tool for refreshing vector stores
     tools.append(
         Tool(
@@ -86,5 +90,6 @@ __all__ = [
     'clear_working_memory_function',
     'initialize_car',
     'close_car',
+    'initialize_robot_vision_tools',
 ]
 

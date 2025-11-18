@@ -11,7 +11,7 @@ from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 
-from tools import create_tools, initialize_vector_store_manager, initialize_car
+from tools import create_tools, initialize_vector_store_manager, initialize_car, initialize_robot_vision_tools
 
 
 def create_agent():
@@ -30,6 +30,9 @@ def create_agent():
         temperature=0.7,
         api_key=os.getenv("OPENAI_API_KEY")
     )
+    
+    # Initialize robot vision tools with the LLM
+    initialize_robot_vision_tools(llm)
     
     # Create tools
     tools = create_tools()
