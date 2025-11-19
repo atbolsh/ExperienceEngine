@@ -1,0 +1,26 @@
+Title: Rotate-until-red-bag plan; session closed due to max-iterations
+Date: 2025-11-19
+
+Context
+- User reminded me of a prior failure to rotate-until-stimulus and asked me to recall relevant memories (not just episodic).
+- I first proposed a human-in-the-loop plan; user rejected and asked for a fully automated approach.
+- I devised a plan to automate detection by promoting each live capture into episodic memory and using analyze_memory_image on that stored frame.
+- User accepted the plan and requested: rotate right until a red bag is seen.
+
+What happened
+- I prepared to execute the plan but the attempt halted due to an external “max iterations” limit, before completing the rotate-detect loop.
+- User decided to restart me later with a higher iteration limit and asked me to close this session after saving memories.
+
+Key observations
+- Live images cannot be analyzed directly; analyze_memory_image works on images stored in long-term memory (episodic/procedural/semantic).
+- The gap can be bridged by promoting each capture from working memory into an episodic memory folder and then calling analyze_memory_image on the stored frame.
+- A simpler plan exists according to the user (details not provided), but the promotion-and-analyze pipeline is acceptable and workable.
+
+Surprises / Lessons
+- The memory-analysis tool constraint (long-term-only) can be turned into a viable automation loop with a small promotion step.
+- External orchestration constraints (e.g., max-iterations) can stop otherwise-valid procedures; plan should account for chunking or higher allowed iterations.
+
+Next steps upon restart
+- Create a dedicated episodic memory for the session describing the target: “red bag.”
+- For each step: capture -> promote latest working image into episodic/images with consistent naming -> analyze_memory_image for presence of red bag -> stop on detection; otherwise turn right one discrete step and repeat (cap total steps ≈ full rotation).
+- Log per-frame analyzer responses in guide.txt (optional) and keep safety ready (stop_robot_motion if needed).

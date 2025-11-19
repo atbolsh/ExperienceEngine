@@ -88,7 +88,7 @@ def turn_robot_left(mode: str = "default") -> str:
     Turn the robot left.
     
     Args:
-        mode: "default" for 2-second turn with auto-stop, or "continuous" to turn until manually stopped.
+        mode: "default" for 1-second turn with auto-stop, or "continuous" to turn until manually stopped.
         
     Returns:
         Status message
@@ -97,13 +97,13 @@ def turn_robot_left(mode: str = "default") -> str:
         car = get_car_instance()
         
         if mode.lower() == "continuous":
-            car.left(speed=20)
+            car.left(speed=40)
             return "Robot is now turning left continuously. Use stop_motion to halt."
         else:
-            car.left(speed=20)
-            time.sleep(2)
+            car.left(speed=40)
+            time.sleep(1)
             car.stop()
-            return "Robot turned left for 2 seconds."
+            return "Robot turned left for 1 second."
     except Exception as e:
         return f"Error turning left: {str(e)}"
 
@@ -113,7 +113,7 @@ def turn_robot_right(mode: str = "default") -> str:
     Turn the robot right.
     
     Args:
-        mode: "default" for 2-second turn with auto-stop, or "continuous" to turn until manually stopped.
+        mode: "default" for 1-second turn with auto-stop, or "continuous" to turn until manually stopped.
         
     Returns:
         Status message
@@ -122,13 +122,13 @@ def turn_robot_right(mode: str = "default") -> str:
         car = get_car_instance()
         
         if mode.lower() == "continuous":
-            car.right(speed=20)
+            car.right(speed=40)
             return "Robot is now turning right continuously. Use stop_motion to halt."
         else:
-            car.right(speed=20)
-            time.sleep(2)
+            car.right(speed=40)
+            time.sleep(1)
             car.stop()
-            return "Robot turned right for 2 seconds."
+            return "Robot turned right for 1 second."
     except Exception as e:
         return f"Error turning right: {str(e)}"
 
@@ -138,7 +138,7 @@ def move_robot_forward(mode: str = "default") -> str:
     Move the robot forward.
     
     Args:
-        mode: "default" for 2-second movement with auto-stop, or "continuous" to move until manually stopped.
+        mode: "default" for 1-second movement with auto-stop, or "continuous" to move until manually stopped.
         
     Returns:
         Status message
@@ -147,13 +147,13 @@ def move_robot_forward(mode: str = "default") -> str:
         car = get_car_instance()
         
         if mode.lower() == "continuous":
-            car.forward(speed=20)
+            car.forward(speed=40)
             return "Robot is now moving forward continuously. Use stop_motion to halt."
         else:
-            car.forward(speed=20)
-            time.sleep(2)
+            car.forward(speed=40)
+            time.sleep(1)
             car.stop()
-            return "Robot moved forward for 2 seconds."
+            return "Robot moved forward for 1 second."
     except Exception as e:
         return f"Error moving forward: {str(e)}"
 
@@ -163,7 +163,7 @@ def move_robot_backward(mode: str = "default") -> str:
     Move the robot backward.
     
     Args:
-        mode: "default" for 2-second movement with auto-stop, or "continuous" to move until manually stopped.
+        mode: "default" for 1-second movement with auto-stop, or "continuous" to move until manually stopped.
         
     Returns:
         Status message
@@ -172,13 +172,13 @@ def move_robot_backward(mode: str = "default") -> str:
         car = get_car_instance()
         
         if mode.lower() == "continuous":
-            car.backward(speed=20)
+            car.backward(speed=40)
             return "Robot is now moving backward continuously. Use stop_motion to halt."
         else:
-            car.backward(speed=20)
-            time.sleep(2)
+            car.backward(speed=40)
+            time.sleep(1)
             car.stop()
-            return "Robot moved backward for 2 seconds."
+            return "Robot moved backward for 1 second."
     except Exception as e:
         return f"Error moving backward: {str(e)}"
 
@@ -228,22 +228,22 @@ def create_robot_tools() -> List[Tool]:
         Tool(
             name="turn_robot_left",
             func=turn_robot_left,
-            description="Turn the robot left for 2 seconds at speed 20, then auto-stop. Pass 'continuous' to turn continuously until manually stopped. Example: 'default' or 'continuous'"
+            description="Turn the robot left for 1 second at speed 40, then auto-stop. Pass 'continuous' to turn continuously until manually stopped. Example: 'default' or 'continuous'"
         ),
         Tool(
             name="turn_robot_right",
             func=turn_robot_right,
-            description="Turn the robot right for 2 seconds at speed 20, then auto-stop. Pass 'continuous' to turn continuously until manually stopped. Example: 'default' or 'continuous'"
+            description="Turn the robot right for 1 second at speed 40, then auto-stop. Pass 'continuous' to turn continuously until manually stopped. Example: 'default' or 'continuous'"
         ),
         Tool(
             name="move_robot_forward",
             func=move_robot_forward,
-            description="Move the robot forward for 2 seconds at speed 20, then auto-stop. Pass 'continuous' to move continuously until manually stopped. Example: 'default' or 'continuous'"
+            description="Move the robot forward for 1 second at speed 40, then auto-stop. Pass 'continuous' to move continuously until manually stopped. Example: 'default' or 'continuous'"
         ),
         Tool(
             name="move_robot_backward",
             func=move_robot_backward,
-            description="Move the robot backward for 2 seconds at speed 20, then auto-stop. Pass 'continuous' to move continuously until manually stopped. Example: 'default' or 'continuous'"
+            description="Move the robot backward for 1 second at speed 40, then auto-stop. Pass 'continuous' to move continuously until manually stopped. Example: 'default' or 'continuous'"
         ),
         Tool(
             name="stop_robot_motion",

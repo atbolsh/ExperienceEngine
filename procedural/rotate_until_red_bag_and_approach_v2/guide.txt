@@ -1,0 +1,31 @@
+Title: Rotate-until-red-bag and short-approach (v2)
+
+Purpose
+- Autonomously search for a predominantly red bag via stepwise rotation; optionally approach safely.
+
+Pre-checks
+- Environment clear; emergency stop available.
+- Set parameters: turn_step_deg ≈ 15°, max_steps = 24–30, forward_step = 1 unit, max_forward_steps = 3.
+- Create run folder and log file; plan to save baseline.jpg, frame_{idx}.jpg, annotated_step_{idx}.jpg, latest_capture.jpg, and run_summary.txt.
+
+Procedure
+1) Baseline capture
+   - Capture baseline.jpg before any motion. If bag already visible, skip rotation and proceed to centering/approach.
+2) Rotate-until-detected loop
+   - For idx in 1..max_steps:
+     a) Turn right one increment and auto-stop.
+     b) Capture frame_{idx}.jpg.
+     c) Analyze for red-bag: HSV red mask (both hue lobes), morphology open/close, find contours; keep ones with area >= threshold, aspect ratio 0.5–2.5, solidity > 0.8.
+     d) If detected: draw bbox, save annotated_step_{idx}.jpg, record idx and bbox; break loop.
+   - If not detected after max_steps: log not found; stop.
+3) Optional auto-centering (if desired)
+   - If bbox center deviates > target_center_threshold from image center, apply small corrective turns and recheck until within tolerance.
+4) Short approach
+   - Move forward in up to max_forward_steps increments; after each, capture and analyze.
+   - Track area ratio growth; stop if growth exceeds safe threshold or if bbox leaves frame.
+5) Wrap-up
+   - Save latest_capture.jpg and run_summary.txt with detection step, bbox, confidences, and any notes.
+
+Notes
+- Always persist the baseline frame; it’s critical for auditing the run.
+- Keep discrete movement and per-step captures for safety and traceability.
