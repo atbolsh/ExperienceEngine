@@ -1,0 +1,75 @@
+Title: Checklist — Consolidating Episodic Memories with Images
+
+Purpose
+- Provide a reliable, repeatable process to merge several messy/overlapping episodic memories into a single, well-structured summary memory without losing originals.
+
+Principles
+- Preserve originals: copy, don’t move or delete.
+- Be explicit and consistent with naming.
+- Keep the summary concise and useful for retrieval.
+
+Prerequisites
+- Know the target theme (e.g., “red_bag_search”).
+- Decide the destination episodic memory name (snake_case, no spaces/special chars).
+
+Step-by-step
+1) Plan the consolidation
+   - Define the goal of the summary memory (what it will answer and for whom).
+   - Pick destination memory name (e.g., red_bag_search_summary).
+
+2) Create the destination episodic memory
+   - Make a new episodic memory folder with the chosen name.
+   - Write guide.txt with:
+     - Context: what scenario/task these memories are about
+     - Key events/strategy: the distilled plan or outcome
+     - Image mapping: short description of each saved image’s role (baseline, detected, annotated)
+     - Provenance note: “Images were copied from earlier episodic memories; originals remain intact.”
+
+3) Inventory sources
+   - List candidate episodic memories related to the theme.
+   - Skim their guide.txt and image names to select the best representative images (baseline, detections, annotations, etc.).
+
+4) Copy images into the destination (do not delete originals)
+   - Preferred standard names in the destination:
+     - baseline.jpg — representative initial scene/frame
+     - detected.jpg — best single frame of a clear detection
+     - detected_annotated.jpg — the same or later frame with annotations
+   - If there are more images to keep, name them descriptively (e.g., approach_step_01.jpg, failure_case_01.jpg).
+   - Ensure formats are consistent (jpg preferred unless fidelity requires png).
+
+5) Verification
+   - Confirm the destination memory contains:
+     - guide.txt
+     - baseline.jpg (present and viewable)
+     - detected.jpg (present and viewable)
+     - detected_annotated.jpg (present and viewable)
+   - Sanity-check sizes and that files open without corruption.
+
+6) Refresh indices
+   - Run refresh_vector_stores so the new/updated memory is searchable.
+
+7) Preserve and cross-reference
+   - Keep all source episodic memories intact.
+   - Optionally add a short “Source memories consulted” section in the destination guide.txt (no private or unnecessary details).
+
+8) Optional enhancements (use only if helpful)
+   - Add a brief “Lessons learned” subsection to the destination guide.txt to capture tactics that worked.
+   - Include failure cases with concise notes if they improve future retrieval.
+
+9) Create an episodic log of the consolidation
+   - Add an episodic memory entry describing what you consolidated, why, and the naming scheme used.
+
+10) Quality bar
+   - The destination guide.txt should be skim-friendly and answer “what, why, how to reuse” in <200 words.
+   - Image names should be unambiguous without reading the guide.
+
+Template — Destination guide.txt
+- Title: <theme> summary (e.g., Red bag search — summary)
+- Context: <1–2 lines>
+- Strategy/Key events: <2–4 bullets>
+- Images:
+  - baseline.jpg — <short description>
+  - detected.jpg — <short description>
+  - detected_annotated.jpg — <short description>
+- Notes: Images copied from earlier episodic memories; originals preserved.
+- Lessons learned (optional): <bullets>
