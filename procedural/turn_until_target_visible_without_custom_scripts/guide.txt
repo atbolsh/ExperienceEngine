@@ -1,0 +1,29 @@
+Title: Turn until target visible (no custom scripts)
+
+Prerequisites
+- A tool must be available that can analyze the current server-provided snapshot and return:
+  - detection result (true/false)
+  - label(s)
+  - bbox [x, y, w, h]
+  - confidence (0-1)
+- The list_scripts tool is broken; do not use it.
+
+Procedure
+1) Safety check
+   - Ensure robot is stationary before each image capture.
+2) Capture step
+   - Turn right in small steps (e.g., 10-20 degrees) using turn_robot_right.
+   - After each step, stop and capture a snapshot (the server provides one per message).
+3) Detection query
+   - Ask the snapshot-analysis tool: “Is a [target label] visible?”
+   - If yes: request bbox [x, y, w, h], confidence, and position note (left/center/right, near/far).
+4) Decision and action
+   - If detected: immediately stop all motion. Optionally center/approach.
+   - If not detected: repeat steps 2-3.
+5) Logging
+   - Save the annotated snapshot as <target>_with_bbox.jpg when detected.
+   - Record an episodic memory of the run (context, steps, detections, final state).
+
+Notes
+- Do not claim detections without a tool-backed result.
+- If no snapshot-analysis tool is available, state the limitation, request the tool, or propose an alternative plan.

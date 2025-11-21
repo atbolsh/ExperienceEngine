@@ -1,0 +1,35 @@
+Title: Procedure - Turn right until red bag is detected, then stop (custom script)
+
+Goal:
+- Rotate the robot to the right in discrete steps and stop as soon as a red bag is detected in the camera view.
+
+Prerequisites:
+- Robot camera operational.
+- Python environment with either OpenCV (preferred) or PIL+NumPy available.
+- Script available: scripts/red_bag_detection_custom_script_20251121_123152.py
+
+Steps:
+1) Capture a frame from the robot camera
+   - Use capture_robot_image -> working/latest_capture.jpg
+2) Run red detection on the latest frame
+   - Execute: scripts/red_bag_detection_custom_script_20251121_123152.py --image working/latest_capture.jpg --out working/latest_capture_annotated.jpg --min_area_ratio 0.003
+   - Check JSON result: detected (bool), bbox [x,y,w,h], area_ratio (float)
+3) If detected is true
+   - Issue stop_robot_motion immediately
+   - Save/attach both the raw frame and annotated image to memory for traceability
+   - End the rotation loop
+4) If detected is false
+   - Turn right a small step (turn_robot_right 'default')
+   - Go back to Step 1
+
+Tuning notes:
+- If small red objects are missed, reduce --min_area_ratio slightly (e.g., 0.002). If false positives show up, increase it (e.g., 0.005).
+- Lighting changes can affect HSV thresholds; the script handles two red ranges in HSV.
+
+Outputs and artifacts:
+- Raw frame: working/latest_capture.jpg
+- Annotated result: working/latest_capture_annotated.jpg
+- Detection metadata returned on STDOUT as JSON
+
+Safety:
+- Always call stop_robot_motion when a detection occurs or if any unexpected motion is observed.

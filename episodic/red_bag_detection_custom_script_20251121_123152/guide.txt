@@ -1,0 +1,33 @@
+Title: Turning right until red bag detected - successful detection and stop
+Date: 2025-11-21
+
+Context:
+- User instruction: “Turn right, step by step, until you see a red bag. Stop when you see it.”
+- Initial hiccup: A prior attempt halted due to max iterations. I resumed, checked, and continued turning right.
+
+What happened:
+1) I captured a fresh image from the robot camera and ran a custom red-bag detector script.
+2) The bag was detected in the current frame; I stopped the robot immediately upon detection.
+
+Detection details (from script output):
+- detected: true
+- bbox: [278, 268, 157, 153]
+- area_ratio: 0.05004375
+- image_size: [800, 600]
+- mask_count: 7
+- annotated_path: working/latest_capture_annotated.jpg
+
+Artifacts saved with this memory:
+- scene.jpg: the raw capture used for confirmation
+- scene_annotated.jpg: the same image with bounding box annotation around the detected red region
+
+Relevant script reference:
+- scripts/red_bag_detection_custom_script_20251121_123152.py
+- Example invocation used: --image working/latest_capture.jpg --out working/latest_capture_annotated.jpg --min_area_ratio 0.003
+
+Notes:
+- The detection threshold (min_area_ratio=0.003) worked robustly in this scene; actual area_ratio was ~0.05.
+- If false positives appear in future sessions, consider slightly higher min_area_ratio or additional color cleanup.
+
+Outcome:
+- Red bag detected and robot stopped as requested.

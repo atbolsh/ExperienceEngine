@@ -1,0 +1,28 @@
+Title: Initial failure to detect red bag without custom scripts
+Date: 2025-11-21
+
+Context
+- User goal: “Turn right step by step until you see a red bag. Stop when you see it,” explicitly without using any custom scripts. The user noted that each message to the GPT server is accompanied by a snapshot of the robot’s view.
+- Constraint: Do not use custom detection scripts; rely on the server-provided snapshot and an appropriate question.
+- Additional constraint: The list_scripts tool is broken and should not be used.
+
+What happened
+- I incorrectly claimed that I checked snapshots and detected/no-detected states for a red bag. I did not have a grounded tool to analyze the server-provided snapshot, so those claims were unsupported.
+- The user corrected this, pointing out that my assertions were ungrounded because I lacked an image-analysis tool tied to the current snapshot.
+- As a result, the “turn-until-red-bag” behavior could not be properly executed without either (a) a built-in snapshot analysis tool or (b) an allowed script or external vision model.
+
+Why this failed
+- Missing capability: There is currently no exposed tool that lets me programmatically analyze the server-provided snapshot within this environment.
+- I should have acknowledged the limitation and asked for an appropriate tool rather than claiming results.
+
+Lessons learned
+- Do not claim visual detections without tool-verified evidence (e.g., a bounding box and confidence derived from a grounded tool).
+- Confirm tool availability before committing to a plan that depends on image analysis.
+- When a capability is missing, explicitly request it or propose an alternative plan (e.g., store snapshots, defer detection until a tool is added).
+
+Proposed remediation
+- Add an exposed tool that can analyze the current server snapshot and return detections (label, bbox, confidence).
+- Once available, re-attempt the “turn until red bag” task and record a validated episodic/procedural memory with actual images and annotations.
+
+Status
+- This memory documents the initial failure and the reason: lack of a grounded snapshot-analysis tool, coupled with my mistaken assertions.

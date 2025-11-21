@@ -4,12 +4,17 @@ Injects the latest robot camera image or working memory image into all LLM calls
 """
 
 import os
+import sys
 import base64
 import cv2
 from typing import Any, List, Optional, Union
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
 from langchain_core.language_models.chat_models import BaseChatModel
+
+# Add tools to path for robot imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+from tools.robot_tools import get_latest_robot_image, get_car_instance
 
 
 def encode_image_to_base64(image_path: str) -> tuple[str, str]:
@@ -75,7 +80,6 @@ class ImageInjectingLLM(ChatOpenAI):
         """
         # Try to get the latest robot image first
         try:
-            from tools.robot_tools import get_latest_robot_image
             robot_image = get_latest_robot_image()
             
             if robot_image is not None:
@@ -85,29 +89,17 @@ class ImageInjectingLLM(ChatOpenAI):
             # If robot image retrieval fails, continue to fallback
             pass
         
-        # Fallback: Try to get the most recent image from working memory
+        # Fallback: Directly capture a new image from the robot camera
         try:
-            working_dir = os.path.join(os.path.dirname(__file__), '..', 'working')
-            if os.path.exists(working_dir):
-                # Look for image files
-                image_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
-                image_files = []
-                
-                for filename in os.listdir(working_dir):
-                    file_path = os.path.join(working_dir, filename)
-                    if os.path.isfile(file_path):
-                        ext = os.path.splitext(filename)[1].lower()
-                        if ext in image_extensions:
-                            image_files.append(file_path)
-                
-                # Get the most recently modified image
-                if image_files:
-                    most_recent = max(image_files, key=os.path.getmtime)
-                    base64_data, image_format = encode_image_to_base64(most_recent)
-                    filename = os.path.basename(most_recent)
-                    return base64_data, image_format, f"working memory: {filename}"
+            car = get_car_instance()
+            img_bytes = car.capture_image()
+            img_array = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
+            
+            if img_array is not None:
+                base64_data, image_format = encode_numpy_image_to_base64(img_array)
+                return base64_data, image_format, "fresh robot camera capture"
         except Exception as e:
-            # If working memory retrieval fails, no image will be included
+            # If direct capture fails, no image will be included
             pass
         
         return None

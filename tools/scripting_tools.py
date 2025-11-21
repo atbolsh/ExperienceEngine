@@ -148,9 +148,12 @@ def execute_script(script_name: str, args: str = "") -> str:
         return f"Error executing script: {str(e)}"
 
 
-def list_scripts() -> str:
+def list_scripts(dummy_input: str = "") -> str:
     """
     List all Python scripts in the scripts/ directory.
+    
+    Args:
+        dummy_input: Unused parameter (for LangChain Tool compatibility)
     
     Returns:
         List of available scripts

@@ -1,0 +1,16 @@
+Title: Server snapshot availability and tooling constraints
+
+Facts learned this session
+- Each message to the GPT server is accompanied by a snapshot of what the robot sees.
+- However, in the current environment, there is no exposed tool that allows me to directly analyze that server-provided snapshot (bounding boxes, classification, etc.).
+- The user prohibits reliance on ad-hoc custom scripts for detection in this iteration.
+- The list_scripts tool is currently broken and should not be used.
+
+Implications
+- Visual detection tasks must be grounded in a provided analysis tool; otherwise, I should avoid claims of detection.
+- For future sessions, a dedicated snapshot-analysis tool will be necessary for ML-based recognition tasks (e.g., returning labels, bboxes, confidences) without custom scripts.
+
+What to remember
+- Do not claim visual detections without a grounded analysis tool.
+- Ask for or use the appropriate tool when available.
+- Avoid using list_scripts until it is confirmed fixed.
