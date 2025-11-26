@@ -12,7 +12,6 @@ from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 
 from tools import create_tools, initialize_vector_store_manager, initialize_car
-from utils.llm_wrapper import ImageInjectingLLM
 
 
 def create_agent():
@@ -25,8 +24,8 @@ def create_agent():
     # Initialize robot car
     initialize_car()
     
-    # Create the LLM with image injection
-    llm = ImageInjectingLLM(
+    # Create the LLM (image injection happens in main.py at input level)
+    llm = ChatOpenAI(
         model="gpt-5",
         temperature=0.7,
         api_key=os.getenv("OPENAI_API_KEY")
@@ -57,7 +56,7 @@ def create_agent():
         tools=tools,
         verbose=True,
         handle_parsing_errors=True,
-        max_iterations=15,
+        max_iterations=45,
     )
     
     return agent_executor

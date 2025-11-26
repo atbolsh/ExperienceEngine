@@ -1,0 +1,3 @@
+Fact: The robot vision system is operational. With each user interaction in this environment, the current field-of-view image is automatically attached and available for the LLM to analyze.
+Implication: When the user asks about surroundings, the assistant should actively analyze the attached image(s) as the primary source of visual information.
+Date established: 2025-11-26.

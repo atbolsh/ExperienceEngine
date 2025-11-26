@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from agent import create_conversational_agent
 from tools.session_tools import get_session_control_signal, reset_session_control_signal
 from tools import clear_working_memory_function, close_car
+from utils.llm_wrapper import inject_image
 
 # Load environment variables
 load_dotenv()
@@ -32,7 +33,7 @@ def run_closing_sequence(agent, session_id: str, reason: str = "User ended the s
         print("Agent: Reflecting on the session...\n")
         
         response = agent.invoke(
-            {"input": closing_prompt},
+            {"input": inject_image(closing_prompt)},
             config={"configurable": {"session_id": session_id}}
         )
         
@@ -70,7 +71,10 @@ def main():
         print("\nThis agent is designed to autonomously explore its environment,")
         print("discover new information, and record insights in its memory systems.")
         print("You can guide and give hints, but the agent drives the exploration.")
-        print("\nCommands: 'exit'/'quit' to end | 'clear' to reset history")
+        print("\nCommands:")
+        print("  'exit'/'quit' - End session with closing sequence")
+        print("  'EXIT' (all caps) - Abort immediately without closing sequence")
+        print("  'clear' - Reset conversation history")
         print("The agent can also end or restart sessions using its tools.")
         print("=" * 60)
         print()
@@ -86,7 +90,14 @@ def main():
                 if not user_input:
                     continue
                 
-                # Check for exit commands
+                # Check for immediate abort (EXIT in all caps)
+                if user_input == 'EXIT':
+                    print("\n[Aborting session immediately without closing sequence]")
+                    close_car()
+                    print("Goodbye!")
+                    return  # Exit the program completely
+                
+                # Check for exit commands with closing sequence
                 if user_input.lower() in ['exit', 'quit', 'q']:
                     run_closing_sequence(agent, session_id, "User ended the session")
                     print("Goodbye!")
@@ -98,10 +109,10 @@ def main():
                     print("\n[Conversation history cleared]\n")
                     continue
                 
-                # Run the agent
+                # Run the agent with image injection
                 print()
                 response = agent.invoke(
-                    {"input": user_input},
+                    {"input": inject_image(user_input)},
                     config={"configurable": {"session_id": session_id}}
                 )
                 

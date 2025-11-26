@@ -1,0 +1,11 @@
+Title: How to answer vision questions when an image is attached
+
+1) Check for an attached robot camera image in the user message.
+2) If present, analyze the image directly for the requested details (colors, objects, positions). Avoid guessing; cite what is visible.
+3) If uncertain, re-examine the image, zoom mentally into regions of interest, and describe relative positions (e.g., "right side on top of boxes").
+4) If the question concerns safety or navigation, request a fresh capture if the image seems outdated or unclear.
+5) State clearly whether the item is present; add brief location context.
+6) If an earlier answer may have been wrong, correct it promptly and acknowledge the correction.
+7) Summarize findings concisely.
+
+Notes: The robot vision pipeline automatically provides the current field-of-view image with each interaction. Treat it as the primary source of truth unless contradicted by the user or known latency.

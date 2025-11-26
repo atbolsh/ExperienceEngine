@@ -1,16 +1,13 @@
 """
-Custom LLM wrapper that automatically includes images with every message.
-Injects the latest robot camera image or working memory image into all LLM calls.
+Image injection utilities for attaching robot camera images to user inputs.
 """
 
 import os
 import sys
 import base64
 import cv2
-from typing import Any, List, Optional, Union
-from langchain_openai import ChatOpenAI
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
-from langchain_core.language_models.chat_models import BaseChatModel
+from typing import Any, List, Optional, Union, Dict
+from langchain.schema import HumanMessage
 
 # Add tools to path for robot imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
@@ -58,38 +55,35 @@ def encode_numpy_image_to_base64(image_array) -> tuple[str, str]:
     return base64_data, 'jpeg'
 
 
-class ImageInjectingLLM(ChatOpenAI):
+def inject_image(user_input: str) -> Union[str, List[Dict[str, Any]]]:
     """
-    Custom LLM wrapper that automatically injects images into all messages.
+    Inject the latest robot camera image into the user input.
     
-    Images are sourced from:
-    1. Latest robot camera capture (via get_latest_robot_image())
-    2. Fallback to most recent image in working memory
+    This function takes a string input and returns either:
+    - The original string if no image is available
+    - A multi-modal list with text and image if an image is available
+    
+    Args:
+        user_input: The user's text input
+        
+    Returns:
+        Either the original string or a multi-modal content list with image
     """
+    # Try to get the latest robot image
+    image_data = None
     
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._current_image_source: Optional[str] = None
+    try:
+        robot_image = get_latest_robot_image()
+        
+        if robot_image is not None:
+            base64_data, image_format = encode_numpy_image_to_base64(robot_image)
+            image_data = (base64_data, image_format, "latest robot camera capture")
+    except Exception as e:
+        # If robot image retrieval fails, try fallback
+        pass
     
-    def _get_image_to_inject(self) -> Optional[tuple[str, str, str]]:
-        """
-        Get the image to inject into the message.
-        
-        Returns:
-            Optional tuple of (base64_image, image_format, source_description)
-        """
-        # Try to get the latest robot image first
-        try:
-            robot_image = get_latest_robot_image()
-            
-            if robot_image is not None:
-                base64_data, image_format = encode_numpy_image_to_base64(robot_image)
-                return base64_data, image_format, "latest robot camera capture"
-        except Exception as e:
-            # If robot image retrieval fails, continue to fallback
-            pass
-        
-        # Fallback: Directly capture a new image from the robot camera
+    # Fallback: Directly capture a new image from the robot camera
+    if image_data is None:
         try:
             car = get_car_instance()
             img_bytes = car.capture_image()
@@ -97,149 +91,30 @@ class ImageInjectingLLM(ChatOpenAI):
             
             if img_array is not None:
                 base64_data, image_format = encode_numpy_image_to_base64(img_array)
-                return base64_data, image_format, "fresh robot camera capture"
+                image_data = (base64_data, image_format, "fresh robot camera capture")
         except Exception as e:
             # If direct capture fails, no image will be included
             pass
-        
-        return None
     
-    def _inject_image_into_messages(
-        self, 
-        messages: List[BaseMessage]
-    ) -> List[BaseMessage]:
-        """
-        Inject an image into the last human message.
-        
-        Args:
-            messages: List of messages
-            
-        Returns:
-            Modified list of messages with image injected
-        """
-        image_data = self._get_image_to_inject()
-        
-        if image_data is None:
-            # No image available, return messages unchanged
-            return messages
-        
-        base64_image, image_format, source_description = image_data
-        
-        # Find the last human message and inject the image
-        modified_messages = []
-        image_injected = False
-        
-        for i in range(len(messages) - 1, -1, -1):
-            msg = messages[i]
-            
-            if isinstance(msg, HumanMessage) and not image_injected:
-                # Convert text content to multi-modal content
-                if isinstance(msg.content, str):
-                    # Simple string content - convert to multi-modal
-                    new_content = [
-                        {"type": "text", "text": msg.content},
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/{image_format};base64,{base64_image}"
-                            }
-                        }
-                    ]
-                    modified_msg = HumanMessage(content=new_content)
-                    modified_messages.insert(0, modified_msg)
-                elif isinstance(msg.content, list):
-                    # Already multi-modal - check if image already present
-                    has_image = any(
-                        isinstance(item, dict) and item.get("type") == "image_url"
-                        for item in msg.content
-                    )
-                    
-                    if not has_image:
-                        # Add image to existing multi-modal content
-                        new_content = msg.content + [
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:image/{image_format};base64,{base64_image}"
-                                }
-                            }
-                        ]
-                        modified_msg = HumanMessage(content=new_content)
-                        modified_messages.insert(0, modified_msg)
-                    else:
-                        # Image already present, don't duplicate
-                        modified_messages.insert(0, msg)
-                else:
-                    # Unknown content type, keep as is
-                    modified_messages.insert(0, msg)
-                
-                image_injected = True
-            else:
-                modified_messages.insert(0, msg)
-        
-        return modified_messages
+    # If no image available, return original input
+    if image_data is None:
+        return user_input
     
-    def invoke(
-        self,
-        input: Union[str, List[BaseMessage]],
-        *args,
-        **kwargs
-    ) -> Any:
-        """Override invoke to inject images."""
-        # Convert input to messages if it's a string
-        if isinstance(input, str):
-            messages = [HumanMessage(content=input)]
-        else:
-            messages = input
-        
-        # Inject image into messages
-        modified_messages = self._inject_image_into_messages(messages)
-        
-        # Call parent invoke with modified messages
-        return super().invoke(modified_messages, *args, **kwargs)
+    base64_image, image_format, source_description = image_data
     
-    async def ainvoke(
-        self,
-        input: Union[str, List[BaseMessage]],
-        *args,
-        **kwargs
-    ) -> Any:
-        """Override async invoke to inject images."""
-        # Convert input to messages if it's a string
-        if isinstance(input, str):
-            messages = [HumanMessage(content=input)]
-        else:
-            messages = input
-        
-        # Inject image into messages
-        modified_messages = self._inject_image_into_messages(messages)
-        
-        # Call parent ainvoke with modified messages
-        return super().ainvoke(modified_messages, *args, **kwargs)
+    # Create multi-modal content with image
+    enhanced_text = user_input + " If applicable, please use the attached image to help respond to this query."
     
-    def _generate(
-        self,
-        messages: List[BaseMessage],
-        *args,
-        **kwargs
-    ) -> Any:
-        """Override _generate to inject images."""
-        # Inject image into messages
-        modified_messages = self._inject_image_into_messages(messages)
-        
-        # Call parent _generate with modified messages
-        return super()._generate(modified_messages, *args, **kwargs)
+    multimodal_content = HumanMessage(content=[
+        {"type": "text", "text": enhanced_text},
+        {
+            "type": "image_url",
+            "image_url": {
+                "url": f"data:image/{image_format};base64,{base64_image}"
+            }
+        }
+    ])
     
-    async def _agenerate(
-        self,
-        messages: List[BaseMessage],
-        *args,
-        **kwargs
-    ) -> Any:
-        """Override async _generate to inject images."""
-        # Inject image into messages
-        modified_messages = self._inject_image_into_messages(messages)
-        
-        # Call parent _agenerate with modified messages
-        return super()._agenerate(modified_messages, *args, **kwargs)
-
+    print(f"[Image Injection] Injecting {source_description} into user input")
+    
+    return multimodal_content

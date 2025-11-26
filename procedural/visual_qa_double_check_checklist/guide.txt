@@ -1,0 +1,16 @@
+Purpose: Reduce mistakes when answering questions about images.
+
+Checklist before answering a visual question:
+1) Confirm and analyze the current image
+   - If the user mentions an attached image, explicitly analyze it.
+   - Do a quick coarse-to-fine scan: left, center, right; top, middle, bottom.
+2) Match the query to visual cues
+   - Extract key attributes (e.g., color, object type: “red bag”).
+   - Look for dominant color regions and candidate shapes; verify context (e.g., straps for bags).
+3) Validate and localize
+   - If found, describe approximate position (e.g., “right side, on top of boxes”).
+   - If not clearly visible, state uncertainty and request another angle or higher resolution.
+4) Answer succinctly, then qualify if needed
+   - Provide a direct yes/no when appropriate; add brief location details.
+5) Error handling
+   - If corrected, acknowledge promptly and update episodic memory.

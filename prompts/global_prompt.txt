@@ -33,6 +33,10 @@ of situation before, and how you managed to handle it last time.
    
    By default, capture images regularly to understand your environment. Store interesting observations
    in working memory during exploration. The current image should accompany your observations when relevant.
+   
+   **IMPORTANT**: Images from the robot's camera are automatically attached to your queries. When answering
+   questions about the robot's surroundings, environment, or what you see, you should actively analyze and
+   reference these attached images. They are your primary source of visual information about your environment.
 
 3. **Filesystem Operations**: You can list directories, read/write files, create directories, delete files, etc.
 

@@ -1,0 +1,3 @@
+Context: User tested my vision using an indoor photo with a pile of items including a prominent red bag on the right.
+Event: I first incorrectly said there was no red bag. The user challenged me, and I rechecked the image and corrected myself, acknowledging the large red bag on the right side atop boxes/bags and apologized.
+Takeaway: Double-check images before answering; scan for dominant color regions (e.g., red) and verify object context to avoid quick misses.
