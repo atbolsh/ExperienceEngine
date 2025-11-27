@@ -219,6 +219,95 @@ def get_latest_robot_image():
     return _latest_image
 
 
+def analyze_current_view(query: str = "") -> str:
+    """
+    Capture a fresh image from the robot's camera and provide an instant analysis.
+    This tool is particularly useful in the middle of a tool chain when you need
+    to check the current environment without waiting for the next user interaction.
+    
+    Unlike capture_robot_image which just captures the image for later analysis,
+    this tool captures AND analyzes the image immediately, returning a detailed
+    description of what the robot currently sees.
+    
+    Args:
+        query: Optional specific question about the environment (e.g., "what objects 
+               are visible?", "is there anything blocking the path?", "describe colors")
+        
+    Returns:
+        A detailed text description of the current robot camera view, or error message
+    """
+    global _latest_image
+    try:
+        # Import here to avoid circular dependency
+        import base64
+        from langchain_openai import ChatOpenAI
+        
+        # Capture fresh image
+        car = get_car_instance()
+        img_bytes = car.capture_image()
+        img_array = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
+        
+        if img_array is None:
+            return "Error: Failed to decode captured image."
+        
+        # Update the latest image
+        _latest_image = img_array
+        
+        # Save to working memory
+        working_dir = os.path.join(os.path.dirname(__file__), '..', 'working')
+        os.makedirs(working_dir, exist_ok=True)
+        
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
+        img_filename = f'analysis_{timestamp}.jpg'
+        img_path = os.path.join(working_dir, img_filename)
+        cv2.imwrite(img_path, img_array)
+        
+        # Encode image to base64 for vision model
+        success, buffer = cv2.imencode('.jpg', img_array)
+        if not success:
+            return "Error: Failed to encode image for analysis."
+        
+        base64_image = base64.b64encode(buffer).decode('utf-8')
+        
+        # Create vision-enabled LLM
+        llm = ChatOpenAI(
+            model="gpt-5",
+            temperature=0.3,
+            api_key=os.getenv("OPENAI_API_KEY")
+        )
+        
+        # Prepare analysis prompt
+        if query:
+            analysis_prompt = f"Analyze this image from the robot's camera and answer the following: {query}\n\nProvide a clear, concise, and detailed response."
+        else:
+            analysis_prompt = "Analyze this image from the robot's camera. Describe what you see, including: objects, colors, spatial layout, any notable features, and the general environment. Be specific and detailed."
+        
+        # Create multi-modal message
+        from langchain.schema import HumanMessage
+        message = HumanMessage(content=[
+            {"type": "text", "text": analysis_prompt},
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/jpeg;base64,{base64_image}"
+                }
+            }
+        ])
+        
+        # Get analysis from vision model
+        response = llm.invoke([message])
+        
+        # Return the analysis with metadata
+        result = f"[Image Analysis - Captured at {timestamp}]\n"
+        result += f"Image saved to: working/{img_filename}\n\n"
+        result += f"Analysis:\n{response.content}"
+        
+        return result
+        
+    except Exception as e:
+        return f"Error analyzing current view: {str(e)}"
+
+
 def create_robot_tools() -> List[Tool]:
     """
     Create and return all robot interaction tools.
@@ -231,6 +320,11 @@ def create_robot_tools() -> List[Tool]:
             name="capture_robot_image",
             func=capture_robot_image,
             description="Capture an image from the robot's camera. The image will be available for analysis and saved to working memory. Call this before analyzing the robot's surroundings."
+        ),
+        Tool(
+            name="analyze_current_view",
+            func=analyze_current_view,
+            description="Capture and analyze the robot's current camera view in one step. This is especially useful in the MIDDLE of a tool chain when you need to check what the robot sees right now, without waiting for the next user interaction. Returns a detailed text description of the current view. You can optionally provide a specific question about the environment (e.g., 'what objects are visible?', 'is there anything blocking the path?'). Use this when you need immediate visual feedback during a multi-step task."
         ),
         Tool(
             name="turn_robot_left",
