@@ -11,7 +11,7 @@ from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 
-from tools import create_tools, initialize_vector_store_manager, initialize_car
+from tools import create_tools, initialize_vector_store_manager, initialize_env
 
 
 def create_agent():
@@ -21,8 +21,8 @@ def create_agent():
     print("Initializing vector stores...")
     initialize_vector_store_manager()
     
-    # Initialize robot car
-    initialize_car()
+    # Initialize environment (car, game, etc.)
+    initialize_env()
     
     # Create the LLM (image injection happens in main.py at input level)
     llm = ChatOpenAI(

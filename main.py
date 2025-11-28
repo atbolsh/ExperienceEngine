@@ -1,6 +1,6 @@
 """
 Main entry point for the Experience Engine agent.
-Handles the user interaction loop.
+Handles the user interaction loop and loads environment dynamically.
 """
 
 import os
@@ -8,11 +8,52 @@ from dotenv import load_dotenv
 
 from agent import create_conversational_agent
 from tools.session_tools import get_session_control_signal, reset_session_control_signal
-from tools import clear_working_memory_function, close_car
-from environments.car_environment import inject_image
+from tools import clear_working_memory_function, close_env
 
 # Load environment variables
 load_dotenv()
+
+
+def load_environment_inject_image():
+    """
+    Dynamically load the inject_image function from the active environment.
+    
+    Returns:
+        The inject_image function from the active environment
+    """
+    config_path = os.path.join(os.path.dirname(__file__), 'select_environment.config')
+    env_name = 'car_environment'  # Default
+    
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line.startswith('ACTIVE_ENVIRONMENT='):
+                        env_name = line.split('=', 1)[1].strip()
+                        break
+        except Exception as e:
+            print(f"Error reading config: {e}")
+    
+    try:
+        if env_name == 'car_environment':
+            from environments.car_environment import inject_image
+            return inject_image
+        elif env_name == 'game_environment':
+            from environments.game_environment import inject_image
+            return inject_image
+        else:
+            print(f"Unknown environment '{env_name}', defaulting to car_environment")
+            from environments.car_environment import inject_image
+            return inject_image
+    except ImportError as e:
+        print(f"Error importing environment: {e}")
+        from environments.car_environment import inject_image
+        return inject_image
+
+
+# Load the inject_image function from active environment
+inject_image = load_environment_inject_image()
 
 
 def load_closing_prompt() -> str:
@@ -50,8 +91,8 @@ def run_closing_sequence(agent, session_id: str, reason: str = "User ended the s
     except Exception as e:
         print(f"Error clearing working memory: {str(e)}\n")
     
-    # Close the car connection
-    close_car()
+    # Close the environment connection
+    close_env()
 
 
 def main():
@@ -93,7 +134,7 @@ def main():
                 # Check for immediate abort (EXIT in all caps)
                 if user_input == 'EXIT':
                     print("\n[Aborting session immediately without closing sequence]")
-                    close_car()
+                    close_env()
                     print("Goodbye!")
                     return  # Exit the program completely
                 
@@ -153,4 +194,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
