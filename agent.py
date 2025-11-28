@@ -4,6 +4,8 @@ Handles the creation of the AgentExecutor with tools and memory.
 """
 
 import os
+from pathlib import Path
+from typing import Optional
 
 from langchain_openai import ChatOpenAI
 from langchain.agents import AgentExecutor, create_tool_calling_agent
@@ -12,6 +14,7 @@ from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 
 from tools import create_tools, initialize_vector_store_manager, initialize_env
+from tools.memory_schema import list_memory_folders
 
 
 def load_environment_blurb() -> str:
@@ -56,6 +59,76 @@ def load_environment_blurb() -> str:
         return "Environment interface information not available."
 
 
+def load_context_prompt() -> str:
+    """
+    Load the context_prompt.md file containing learned hints.
+    
+    Returns:
+        The context prompt text or empty string if not found
+    """
+    context_path = Path(__file__).parent / "prompts" / "context_prompt.md"
+    try:
+        if context_path.exists():
+            with open(context_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            print(f"[Agent] Loaded context_prompt.md")
+            return content
+        else:
+            print("[Agent] No context_prompt.md found (will be created when agent edits it)")
+            return ""
+    except Exception as e:
+        print(f"Warning: Error loading context_prompt.md: {e}")
+        return ""
+
+
+def load_most_recent_episodic_memory() -> str:
+    """
+    Load the most recent episodic memory to provide continuity.
+    
+    Returns:
+        The most recent episodic memory content or empty string if none found
+    """
+    try:
+        episodic_path = Path(__file__).parent / "episodic"
+        if not episodic_path.exists():
+            print("[Agent] No episodic memory folder found")
+            return ""
+        
+        # Get all memory folders
+        memories = list_memory_folders(episodic_path)
+        
+        if not memories:
+            print("[Agent] No episodic memories found")
+            return ""
+        
+        # Sort by modification time (most recent first)
+        memories_with_time = []
+        for memory in memories:
+            mtime = memory.folder_path.stat().st_mtime
+            memories_with_time.append((mtime, memory))
+        
+        memories_with_time.sort(reverse=True)
+        most_recent = memories_with_time[0][1]
+        
+        print(f"[Agent] Loaded most recent episodic memory: {most_recent.folder_name}")
+        
+        # Format the memory
+        result = f"=== MOST RECENT EPISODIC MEMORY ===\n"
+        result += f"Memory: {most_recent.folder_name}\n\n"
+        result += most_recent.text_content
+        
+        if most_recent.image_files:
+            result += f"\n\n(This memory contains {len(most_recent.image_files)} images: {', '.join(most_recent.image_names)})"
+        
+        result += "\n=== END OF RECENT MEMORY ===\n"
+        
+        return result
+        
+    except Exception as e:
+        print(f"Warning: Error loading most recent episodic memory: {e}")
+        return ""
+
+
 def create_agent():
     """Create and configure the agent with tools and memory."""
     
@@ -84,11 +157,33 @@ def create_agent():
     # Load environment-specific blurb
     environment_blurb = load_environment_blurb()
     
-    # Format the prompt with both cwd and environment_blurb
+    # Load context prompt (learned hints)
+    context_prompt = load_context_prompt()
+    
+    # Load most recent episodic memory for continuity
+    recent_memory = load_most_recent_episodic_memory()
+    
+    # Build the continuity section
+    continuity_section = ""
+    
+    if context_prompt:
+        continuity_section += "\n\n**LEARNED CONTEXT (from context_prompt.md):**\n"
+        continuity_section += context_prompt
+    
+    if recent_memory:
+        continuity_section += "\n\n**SESSION CONTINUITY:**\n"
+        continuity_section += "To help you understand what happened in the previous session, here is the most recent episodic memory:\n\n"
+        continuity_section += recent_memory
+    
+    # Format the prompt with cwd, environment_blurb, and continuity
     formatted_prompt = prompt_text.format(
         cwd=os.getcwd(),
         environment_blurb=environment_blurb
     )
+    
+    # Append continuity section to the end of the prompt
+    if continuity_section:
+        formatted_prompt += continuity_section
     
     # Create the prompt template
     prompt = ChatPromptTemplate.from_messages([

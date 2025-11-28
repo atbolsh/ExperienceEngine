@@ -22,6 +22,7 @@ from tools.memory_writing_tools import create_memory_writing_tools
 from tools.session_tools import create_session_tools
 from tools.tool_writing_tools import create_tool_writing_tools
 from tools.image_processing_tools import create_image_processing_tools
+from tools.context_tools import create_context_tools
 
 
 def load_environment_config() -> str:
@@ -119,6 +120,9 @@ def create_tools() -> List[Tool]:
     
     # Add session control tools
     tools.extend(create_session_tools())
+    
+    # Add context prompt editing tools
+    tools.extend(create_context_tools())
     
     # === CUSTOM TOOLS SECTION (auto-generated tools will be added below) ===
     # Add custom tool: draw_line_to_closest_dot
