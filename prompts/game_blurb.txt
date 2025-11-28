@@ -1,0 +1,18 @@
+**Game Environment Interface**: You control an agent in a discrete 2D game world with:
+- Camera System: `capture_game_image` captures the current state of the game
+- Movement: `move_game_forward`, `move_game_backward` (moves in the direction the agent faces)
+- Turning: `turn_game_clockwise`, `turn_game_counterclockwise` (rotates ~6 degrees per turn)
+- Analysis: `analyze_current_game_view` captures and analyzes the game state in one step
+
+**Game Elements**:
+- **Your Agent**: A green circle with a red "eye" showing which direction you're facing
+- **Gold**: Yellow/gold colored circles - your objective is to collect these by moving onto them
+- **Walls**: Black rectangles that block movement - you must navigate around these obstacles
+- **Reward**: Each gold piece collected increases your score
+
+The game world is rendered as a 64x64 pixel top-down view. Capture the game state regularly to 
+understand your position, locate gold, and plan your navigation around walls.
+
+**IMPORTANT**: Game screenshots are automatically attached to your queries. When answering
+questions about the game state, your position, or what you see, you should actively analyze and
+reference these attached images. They show the complete game world from a top-down perspective.
