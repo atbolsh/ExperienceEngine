@@ -9,9 +9,8 @@ import cv2
 from typing import Any, List, Optional, Union, Dict
 from langchain.schema import HumanMessage
 
-# Add tools to path for robot imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-from tools.robot_tools import get_latest_robot_image, get_car_instance
+# Import from same environment directory
+from .robot_tools import get_latest_robot_image, get_car_instance
 
 
 def encode_image_to_base64(image_path: str) -> tuple[str, str]:

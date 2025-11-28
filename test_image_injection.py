@@ -13,7 +13,7 @@ from datetime import datetime
 # Add project root to path
 sys.path.insert(0, os.path.dirname(__file__))
 
-from utils.llm_wrapper import ImageInjectingLLM, encode_image_to_base64, encode_numpy_image_to_base64
+from environments.car_environment.llm_wrapper import encode_image_to_base64, encode_numpy_image_to_base64
 from utils.image_utils import generate_unique_image_filename, save_image_with_unique_name, get_unique_filepath
 from langchain_core.messages import HumanMessage
 

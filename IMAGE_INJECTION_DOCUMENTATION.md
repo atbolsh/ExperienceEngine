@@ -6,7 +6,7 @@ This document describes the implementation of automatic image injection into all
 
 ## Changes Made
 
-### 1. Custom LLM Wrapper (`utils/llm_wrapper.py`)
+### 1. Custom LLM Wrapper (`environments/car_environment/llm_wrapper.py`)
 
 Created a new `ImageInjectingLLM` class that extends `ChatOpenAI` and automatically injects images into all messages.
 
@@ -46,7 +46,7 @@ Created a new utility module for handling image operations with unique timestamp
 - Example: `capture_20251118_143027_456.jpg`
 - Includes milliseconds for uniqueness even with rapid captures
 
-### 3. Updated Robot Tools (`tools/robot_tools.py`)
+### 3. Updated Robot Tools (`environments/car_environment/robot_tools.py`)
 
 Modified `capture_robot_image()` to save images with unique timestamps:
 
@@ -78,13 +78,10 @@ llm = ChatOpenAI(
 
 **After:**
 ```python
-from utils.llm_wrapper import ImageInjectingLLM
+from environments.car_environment import inject_image
 
-llm = ImageInjectingLLM(
-    model="gpt-5",
-    temperature=0.7,
-    api_key=os.getenv("OPENAI_API_KEY")
-)
+# Note: inject_image is now used in main.py to inject images at the input level
+# rather than wrapping the LLM
 ```
 
 ## How It Works
@@ -165,7 +162,7 @@ filepath = save_image_with_unique_name(
 To access the current image injection behavior:
 
 ```python
-from tools.robot_tools import get_latest_robot_image
+from environments.car_environment import get_latest_robot_image
 
 current_image = get_latest_robot_image()  # Returns numpy array or None
 ```
@@ -216,7 +213,7 @@ Possible improvements:
 
 1. Check that robot has captured an image recently:
    ```python
-   from tools.robot_tools import get_latest_robot_image
+   from environments.car_environment import get_latest_robot_image
    print(get_latest_robot_image() is not None)
    ```
 

@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 from agent import create_conversational_agent
 from tools.session_tools import get_session_control_signal, reset_session_control_signal
 from tools import clear_working_memory_function, close_car
-from utils.llm_wrapper import inject_image
+from environments.car_environment import inject_image
 
 # Load environment variables
 load_dotenv()

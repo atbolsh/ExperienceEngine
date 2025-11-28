@@ -11,9 +11,8 @@ from datetime import datetime
 from typing import List, Optional
 from langchain.tools import Tool
 
-# Add utils to path and import Car
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-from utils.car import Car
+# Import Car from same directory
+from .car import Car
 
 # Global car instance
 car_instance: Optional[Car] = None
