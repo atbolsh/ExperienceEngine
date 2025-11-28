@@ -1,0 +1,16 @@
+Title: End-of-Session Reflection and Memory Update Checklist
+Purpose: Provide a consistent process to close sessions and capture learnings.
+When to Use: At user signal of session end or upon task completion.
+Steps:
+1) Review session context and objectives.
+2) Summarize key activities, decisions, and outcomes.
+3) Capture episodic memory: create an episodic entry including date, context, notable observations, surprises, outcomes, and relevance for future.
+4) Extract semantic facts: record any durable facts or user preferences. Keep concise and actionable.
+5) Update procedural memory: if a repeatable process was refined or created, document step-by-step instructions.
+6) Migrate important temporary insights from working memory to long-term memory.
+7) Refresh vector stores to index new or modified memories.
+8) Provide the user with a concise wrap-up and any recommended next steps.
+Notes:
+- Avoid unnecessary tool usage; only store what has clear future value.
+- If no new facts or procedures emerged, explicitly note that.
+- Respect the user's preference for structured, concise closings.

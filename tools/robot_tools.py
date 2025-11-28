@@ -95,7 +95,7 @@ def turn_robot_left(mode: str = "default") -> str:
     Turn the robot left.
     
     Args:
-        mode: "default" for 2-second turn with auto-stop, or "continuous" to turn until manually stopped.
+        mode: "default" for 1-second turn with auto-stop, or "continuous" to turn until manually stopped.
         
     Returns:
         Status message
@@ -120,7 +120,7 @@ def turn_robot_right(mode: str = "default") -> str:
     Turn the robot right.
     
     Args:
-        mode: "default" for 2-second turn with auto-stop, or "continuous" to turn until manually stopped.
+        mode: "default" for 1-second turn with auto-stop, or "continuous" to turn until manually stopped.
         
     Returns:
         Status message
@@ -145,7 +145,7 @@ def move_robot_forward(mode: str = "default") -> str:
     Move the robot forward.
     
     Args:
-        mode: "default" for 2-second movement with auto-stop, or "continuous" to move until manually stopped.
+        mode: "default" for 1-second movement with auto-stop, or "continuous" to move until manually stopped.
         
     Returns:
         Status message
@@ -170,7 +170,7 @@ def move_robot_backward(mode: str = "default") -> str:
     Move the robot backward.
     
     Args:
-        mode: "default" for 2-second movement with auto-stop, or "continuous" to move until manually stopped.
+        mode: "default" for 1-second movement with auto-stop, or "continuous" to move until manually stopped.
         
     Returns:
         Status message

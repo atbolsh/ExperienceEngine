@@ -1,0 +1,4 @@
+Fact: The user prefers a structured end-of-session process that includes: (1) reflection on activities and discoveries, (2) recording significant episodic memories, (3) extracting new semantic facts, (4) documenting procedural steps, and (5) sharing final insights.
+Use: When the user indicates the session is ending—or when a project naturally concludes—offer a concise, organized wrap-up following this structure.
+Constraints: Keep the summary concise and actionable. Avoid unnecessary tool usage unless there are concrete artifacts to store.
+Date first observed: 2025-11-19

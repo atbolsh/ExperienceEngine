@@ -1,0 +1,12 @@
+Title: Using long-term memory as a vision analysis pipeline for live robot images
+
+Facts
+- The analyze_memory_image tool only operates on images stored in long-term memory folders (semantic/procedural/episodic), not directly on live robot captures.
+- Robot camera captures are stored in working memory by default; working memory is ephemeral and not directly analyzable by analyze_memory_image.
+- Live images can be analyzed indirectly by promoting them from working memory into a long-term memory folder (preferably episodic) and then invoking analyze_memory_image on the stored image.
+- Discrete robot turns (default ~15° per turn_right) with a capture per step provide full 360° coverage in ~24 steps and reduce motion blur risk.
+- External orchestration (agent max-iterations) can interrupt multi-step procedures; consider chunking loops or ensuring sufficient iteration budget.
+
+Implications
+- Tasks like “rotate until seeing X” are feasible without a dedicated live-vision tool by using a capture→promote→analyze loop.
+- Image naming conventions and a dedicated episodic memory per task/session improve traceability (e.g., frame_01.jpg, frame_02.jpg …).

@@ -1,0 +1,7 @@
+Title: Facts learned from red-bag search session (2025-11-19)
+
+- Target definition: A “red bag” is a portable container (handbag, tote, backpack, grocery bag) with predominantly red material; detection should weight red color dominance plus bag-like shape/size.
+- Effective detection method: HSV red masking with morphological cleanup and contour filtering produced reliable detections indoors; parameters should consider dual red ranges (low and high hue) and reject tiny regions and flat panels.
+- Detection performance: In this environment, a red bag was detected after ~90° right rotation (step 6 with ~15° increments), bounding box approx x=572,y=307,w=137,h=107 on the detecting frame.
+- Safety practice: Short, discrete movements with captures at each step reduce risk; maintain a maximum rotation step limit.
+- Logging essentials: Baseline frame before rotation, annotated detection frame at detection step, and final approach frame are key artifacts to retain for traceability.

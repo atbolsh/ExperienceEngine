@@ -1,0 +1,27 @@
+Title: Red bag search summary (consolidated)
+
+Context
+- Goal: Detect a predominantly red bag in the robot’s camera view using a rotate-until-detected strategy, then advance slightly toward it.
+
+Strategy and execution
+1) Baseline capture: Began with a baseline frame to confirm no initial detection.
+2) Rotate-until-detected sweep: Turned right in small increments. After each step, captured a frame and analyzed it with a custom HSV red-mask OpenCV script (morphology cleanup + contour/area-ratio heuristics). Stopped once a qualifying red region consistent with a bag was found or after a full sweep.
+3) Detection: Bag was detected during the sweep. The successful detection run previously logged coordinates around x=572, y=307 with w≈137, h≈107 (area ratio ~2.17%, confidence ~0.83) at approximately the 6th step (~90° right turn).
+4) Approach: Advanced forward cautiously in short increments as requested, monitoring the apparent bag size and ready to stop.
+
+Safety and constraints
+- Stepwise rotation and short forward motions to limit risk.
+- Immediate stop upon detection to avoid overshoot; use area ratio as a proxy for distance when approaching.
+
+Outcome
+- Successful detection and short approach toward the red bag.
+
+Artifacts included in this memory
+- baseline.jpg: initial frame before sweep.
+- detected.jpg: unannotated detection frame.
+- detected_annotated.jpg: annotated detection frame from the successful step.
+
+Notes for future runs
+- Always persist a baseline image prior to sweeping.
+- Enforce a maximum sweep count and persist both raw and annotated detection frames.
+- Consider storing area ratio and bounding box in metadata alongside images for traceability.
