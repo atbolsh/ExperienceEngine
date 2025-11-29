@@ -77,9 +77,12 @@ def edit_context_prompt(new_content: str) -> str:
         return f"Error updating context_prompt.md: {str(e)}"
 
 
-def read_context_prompt() -> str:
+def read_context_prompt(dummy_input: str = "") -> str:
     """
     Read the current contents of context_prompt.md.
+    
+    Args:
+        dummy_input: Unused parameter (for LangChain Tool compatibility)
     
     Returns:
         Current content or error message

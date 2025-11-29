@@ -121,8 +121,13 @@ def append_file(file_path: str, content: str) -> str:
         return f"Error appending to file: {str(e)}"
 
 
-def get_current_directory() -> str:
-    """Get the current working directory."""
+def get_current_directory(dummy_input: str = "") -> str:
+    """
+    Get the current working directory.
+    
+    Args:
+        dummy_input: Unused parameter (for LangChain Tool compatibility)
+    """
     try:
         cwd = Path.cwd()
         return f"Current directory: {cwd}"

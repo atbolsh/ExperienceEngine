@@ -25,9 +25,12 @@ from tools.image_processing_tools import create_image_processing_tools
 from tools.context_tools import create_context_tools
 
 
-def load_environment_config() -> str:
+def load_environment_config(dummy_input: str = "") -> str:
     """
     Load the active environment from select_environment.config.
+    
+    Args:
+        dummy_input: Unused parameter (for LangChain Tool compatibility)
     
     Returns:
         The name of the active environment (e.g., 'car_environment', 'game_environment')
