@@ -1,0 +1,7 @@
+Topic: Red bag detection in cluttered environments
+
+- A "red bag" may appear as any red or red-pink splotch and not have a classic bag silhouette.
+- Always check entire frame, especially periphery (mid-to-upper right was a common location in tests).
+- Confirm by color region rather than hard shape; note context (on top of boxes/other bags).
+- If unsure, request another image or re-run a view analysis with a targeted question.
+- Lesson reinforced by prior sessions: explicitly reference attached images in answers.

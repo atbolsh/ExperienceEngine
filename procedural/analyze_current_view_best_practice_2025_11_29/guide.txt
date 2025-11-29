@@ -1,0 +1,15 @@
+Title: Using analyze_current_view effectively
+
+When to use:
+- Mid-task, when you need immediate visual feedback from the robot camera.
+
+Best practices:
+1) Always provide a focused question, e.g., "Is there a red object directly ahead?" or "Is anything blocking the path forward?" This keeps the response concise and relevant.
+2) Avoid calling analyze_current_view with default/no question; it often produces overly wordy, unfocused output.
+3) Keep perception-action loops short: e.g., rotate left for a brief step, call analyze_current_view with a question, repeat until the target condition is met.
+4) Explicitly reference attached or captured images when answering environment questions.
+
+Example loop (rotate until red bag is out of view):
+- Turn left briefly
+- analyze_current_view("Do you still see a red bag in frame?")
+- If yes, repeat; if no, stop.

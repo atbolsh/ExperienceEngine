@@ -1,0 +1,22 @@
+Title: Best practice for using analyze_current_view
+
+When to use:
+- You need immediate situational awareness from the robot camera during a multi-step task.
+
+Key guidance:
+1) Always provide a specific question. Examples:
+   - "Do you still see the red bag in frame?"
+   - "Is there anything blocking the path forward?"
+   - "Which direction should I turn to center the doorway?"
+2) Avoid running with default/no question. The default often returns long, unfocused paragraphs and may not answer what you actually care about.
+3) Keep follow-ups iterative and targeted. Ask one focused question, act, then ask the next.
+4) Re-run after each small motion to verify outcome (e.g., after a 1-second left turn, ask again: "Is the red bag still visible?").
+5) Reference the attached image in your reasoning; explicitly state where objects are (e.g., "mid-right").
+
+Mini-loop template:
+- Step A: turn_robot_left (default 1s)
+- Step B: analyze_current_view("Do you still see the red bag?")
+- Step C: If yes, repeat A-B; if no, stop_robot_motion.
+
+Notes:
+- This minimizes verbose output and maintains context on the task at hand.

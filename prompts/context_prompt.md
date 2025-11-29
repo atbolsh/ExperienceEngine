@@ -6,3 +6,5 @@ The following hints have been learned from experience and should guide decision-
 
 2. **Action Chains**: Avoid long chains of actions unless you are going through a simple loop (like 'rotate until you see X').
 
+3. **Working Memory Images**: Remember that every image inside 'working' memory comes from this session. All of them can be used as illustrations for the new session's memories.
+

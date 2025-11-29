@@ -102,13 +102,8 @@ def load_most_recent_episodic_memory() -> str:
             return ""
         
         # Sort by modification time (most recent first)
-        memories_with_time = []
-        for memory in memories:
-            mtime = memory.folder_path.stat().st_mtime
-            memories_with_time.append((mtime, memory))
-        
-        memories_with_time.sort(reverse=True)
-        most_recent = memories_with_time[0][1]
+        # Use key parameter to avoid comparing MemoryFolder objects if timestamps are equal
+        most_recent = max(memories, key=lambda m: m.folder_path.stat().st_mtime)
         
         print(f"[Agent] Loaded most recent episodic memory: {most_recent.folder_name}")
         
