@@ -71,7 +71,7 @@ def capture_robot_image(dummy_input: str = "") -> str:
         _latest_image = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
         
         # Save to working memory for reference
-        working_dir = os.path.join(os.path.dirname(__file__), '..', 'working')
+        working_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'working')
         os.makedirs(working_dir, exist_ok=True)
         
         # Save with timestamp for uniqueness
@@ -253,7 +253,7 @@ def analyze_current_view(query: str = "") -> str:
         _latest_image = img_array
         
         # Save to working memory
-        working_dir = os.path.join(os.path.dirname(__file__), '..', 'working')
+        working_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'working')
         os.makedirs(working_dir, exist_ok=True)
         
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
