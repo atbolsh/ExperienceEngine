@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 from datetime import datetime
 from typing import List, Optional
-from langchain.tools import Tool
+from langchain.tools import Tool, StructuredTool
 
 # Global game instance
 game_instance = None
@@ -18,7 +18,7 @@ _latest_image = None
 
 
 def initialize_game(game = None):
-    """Initialize the global game instance."""
+    """Initialize the global game instance and GUI viewer."""
     global game_instance
     try:
         if game is None:
@@ -28,6 +28,19 @@ def initialize_game(game = None):
             game_instance = create_default_game()
         else:
             game_instance = game
+        
+        # Initialize GUI viewer
+        try:
+            import sys
+            sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+            from gui_viewer import initialize_viewer, load_gui_config
+            gui_enabled = load_gui_config()
+            if gui_enabled:
+                initialize_viewer(enabled=True, window_name="Game Environment")
+                print("GUI viewer enabled.")
+        except Exception as e:
+            print(f"GUI viewer could not be initialized: {e}")
+        
         print("Game environment initialized successfully.")
     except Exception as e:
         print(f"Warning: Could not initialize game: {e}")
@@ -35,13 +48,23 @@ def initialize_game(game = None):
 
 
 def close_game():
-    """Close the game instance."""
+    """Close the game instance and GUI viewer."""
     global game_instance
     if game_instance is not None:
         try:
             print("Closing game environment...")
             # The game doesn't need explicit cleanup in envMode
             game_instance = None
+            
+            # Close GUI viewer
+            try:
+                import sys
+                sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+                from gui_viewer import close_viewer
+                close_viewer()
+            except Exception as e:
+                pass  # Silently ignore if viewer was never initialized
+            
             print("Game environment closed.")
         except Exception as e:
             print(f"Error closing game: {str(e)}")
@@ -54,14 +77,11 @@ def get_game_instance():
     return game_instance
 
 
-def capture_game_image(dummy_input: str = "") -> str:
+def capture_game_image(*args, **kwargs) -> str:
     """
     Capture an image from the game's current state.
     The captured image becomes available to the LLM for the next call.
     
-    Args:
-        dummy_input: Unused parameter (for LangChain Tool compatibility)
-        
     Returns:
         Status message indicating successful capture
     """
@@ -80,6 +100,15 @@ def capture_game_image(dummy_input: str = "") -> str:
         img_array = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
         
         _latest_image = img_array
+        
+        # Update GUI viewer
+        try:
+            import sys
+            sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+            from gui_viewer import update_viewer
+            update_viewer(img_array)
+        except Exception as e:
+            pass  # Silently ignore GUI errors
         
         # Save to working memory for reference
         working_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'working')
@@ -100,13 +129,10 @@ def capture_game_image(dummy_input: str = "") -> str:
         return f"Error capturing image: {str(e)}"
 
 
-def move_game_forward(dummy_input: str = "") -> str:
+def move_game_forward(*args, **kwargs) -> str:
     """
     Move the game agent forward.
     
-    Args:
-        dummy_input: Unused parameter (for LangChain Tool compatibility)
-        
     Returns:
         Status message including any reward collected
     """
@@ -122,13 +148,10 @@ def move_game_forward(dummy_input: str = "") -> str:
         return f"Error moving forward: {str(e)}"
 
 
-def move_game_backward(dummy_input: str = "") -> str:
+def move_game_backward(*args, **kwargs) -> str:
     """
     Move the game agent backward.
     
-    Args:
-        dummy_input: Unused parameter (for LangChain Tool compatibility)
-        
     Returns:
         Status message including any reward collected
     """
@@ -144,13 +167,10 @@ def move_game_backward(dummy_input: str = "") -> str:
         return f"Error moving backward: {str(e)}"
 
 
-def turn_game_clockwise(dummy_input: str = "") -> str:
+def turn_game_clockwise(*args, **kwargs) -> str:
     """
     Turn the game agent clockwise (to the right).
     
-    Args:
-        dummy_input: Unused parameter (for LangChain Tool compatibility)
-        
     Returns:
         Status message
     """
@@ -162,13 +182,10 @@ def turn_game_clockwise(dummy_input: str = "") -> str:
         return f"Error turning clockwise: {str(e)}"
 
 
-def turn_game_counterclockwise(dummy_input: str = "") -> str:
+def turn_game_counterclockwise(*args, **kwargs) -> str:
     """
     Turn the game agent counterclockwise (to the left).
     
-    Args:
-        dummy_input: Unused parameter (for LangChain Tool compatibility)
-        
     Returns:
         Status message
     """
@@ -294,35 +311,40 @@ def create_game_tools() -> List[Tool]:
         List of game control and camera tools
     """
     return [
-        Tool(
-            name="capture_game_image",
+        StructuredTool.from_function(
             func=capture_game_image,
-            description="Capture an image from the game's current state. The image will be available for analysis and saved to working memory. Call this before analyzing the game environment."
+            name="capture_game_image",
+            description="Capture an image from the game's current state. The image will be available for analysis and saved to working memory. Call this before analyzing the game environment.",
+            args_schema=None
         ),
         Tool(
             name="analyze_current_game_view",
             func=analyze_current_game_view,
             description="Capture and analyze the game's current state in one step. This is especially useful in the MIDDLE of a tool chain when you need to check what the agent sees right now, without waiting for the next user interaction. Returns a detailed text description of the current view. You can optionally provide a specific question about the game state (e.g., 'where is the gold?', 'what obstacles are visible?'). Use this when you need immediate visual feedback during a multi-step task."
         ),
-        Tool(
-            name="move_game_forward",
+        StructuredTool.from_function(
             func=move_game_forward,
-            description="Move the game agent forward in the direction it's currently facing. Returns status and any gold collected."
+            name="move_game_forward",
+            description="Move the game agent forward in the direction it's currently facing. Returns status and any gold collected.",
+            args_schema=None
         ),
-        Tool(
-            name="move_game_backward",
+        StructuredTool.from_function(
             func=move_game_backward,
-            description="Move the game agent backward (opposite to the direction it's facing). Returns status and any gold collected."
+            name="move_game_backward",
+            description="Move the game agent backward (opposite to the direction it's facing). Returns status and any gold collected.",
+            args_schema=None
         ),
-        Tool(
-            name="turn_game_clockwise",
+        StructuredTool.from_function(
             func=turn_game_clockwise,
-            description="Turn the game agent clockwise (to the right). Changes the agent's facing direction."
+            name="turn_game_clockwise",
+            description="Turn the game agent clockwise (to the right). Changes the agent's facing direction.",
+            args_schema=None
         ),
-        Tool(
-            name="turn_game_counterclockwise",
+        StructuredTool.from_function(
             func=turn_game_counterclockwise,
-            description="Turn the game agent counterclockwise (to the left). Changes the agent's facing direction."
+            name="turn_game_counterclockwise",
+            description="Turn the game agent counterclockwise (to the left). Changes the agent's facing direction.",
+            args_schema=None
         ),
     ]
 

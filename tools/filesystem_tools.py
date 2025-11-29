@@ -121,12 +121,12 @@ def append_file(file_path: str, content: str) -> str:
         return f"Error appending to file: {str(e)}"
 
 
-def get_current_directory(dummy_input: str = "") -> str:
+def get_current_directory(*args, **kwargs) -> str:
     """
     Get the current working directory.
     
-    Args:
-        dummy_input: Unused parameter (for LangChain Tool compatibility)
+    Returns:
+        Current directory path
     """
     try:
         cwd = Path.cwd()
@@ -193,10 +193,11 @@ def create_filesystem_tools() -> List[Tool]:
             description="Append content to an existing file. Inputs: file path, content",
             args_schema=AppendFileInput,
         ),
-        Tool(
-            name="get_current_directory",
+        StructuredTool.from_function(
             func=get_current_directory,
+            name="get_current_directory",
             description="Get the current working directory. No input required.",
+            args_schema=None
         ),
         StructuredTool(
             name="delete_file",

@@ -7,7 +7,7 @@ import sys
 import os
 from typing import List, Tuple, Any
 
-from langchain.tools import Tool
+from langchain.tools import Tool, StructuredTool
 
 from tools.memory_tools import initialize_vector_store_manager, refresh_all_vector_stores, clear_working_memory_function
 from tools.filesystem_tools import create_filesystem_tools
@@ -25,12 +25,9 @@ from tools.image_processing_tools import create_image_processing_tools
 from tools.context_tools import create_context_tools
 
 
-def load_environment_config(dummy_input: str = "") -> str:
+def load_environment_config(*args, **kwargs) -> str:
     """
     Load the active environment from select_environment.config.
-    
-    Args:
-        dummy_input: Unused parameter (for LangChain Tool compatibility)
     
     Returns:
         The name of the active environment (e.g., 'car_environment', 'game_environment')
@@ -136,10 +133,11 @@ def create_tools() -> List[Tool]:
     
     # Add utility tool for refreshing vector stores
     tools.append(
-        Tool(
-            name="refresh_vector_stores",
+        StructuredTool.from_function(
             func=refresh_all_vector_stores,
+            name="refresh_vector_stores",
             description="Refresh all vector stores to pick up new or modified documents. Use after adding or modifying files in semantic, procedural, or episodic directories. No input required.",
+            args_schema=None
         )
     )
     

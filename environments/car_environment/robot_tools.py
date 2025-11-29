@@ -9,7 +9,7 @@ import cv2
 import time
 from datetime import datetime
 from typing import List, Optional
-from langchain.tools import Tool
+from langchain.tools import Tool, StructuredTool
 
 # Import Car from same directory
 from .car import Car
@@ -22,12 +22,25 @@ _latest_image = None
 
 
 def initialize_car():
-    """Initialize the global robot car instance."""
+    """Initialize the global robot car instance and GUI viewer."""
     global car_instance
     try:
         print("Initializing robot car connection...")
         car_instance = Car()
         car_instance.start()
+        
+        # Initialize GUI viewer
+        try:
+            import sys
+            sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+            from gui_viewer import initialize_viewer, load_gui_config
+            gui_enabled = load_gui_config()
+            if gui_enabled:
+                initialize_viewer(enabled=True, window_name="Car Environment")
+                print("GUI viewer enabled.")
+        except Exception as e:
+            print(f"GUI viewer could not be initialized: {e}")
+        
         print("Robot car connected successfully.")
     except Exception as e:
         print(f"Warning: Could not connect to robot car: {e}")
@@ -35,12 +48,22 @@ def initialize_car():
 
 
 def close_car():
-    """Close the robot car connection."""
+    """Close the robot car connection and GUI viewer."""
     global car_instance
     if car_instance is not None:
         try:
             print("Closing robot car connection...")
             car_instance.close()
+            
+            # Close GUI viewer
+            try:
+                import sys
+                sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+                from gui_viewer import close_viewer
+                close_viewer()
+            except Exception as e:
+                pass  # Silently ignore if viewer was never initialized
+            
             print("Robot car connection closed.")
         except Exception as e:
             print(f"Error closing robot car: {str(e)}")
@@ -53,14 +76,11 @@ def get_car_instance():
     return car_instance
 
 
-def capture_robot_image(dummy_input: str = "") -> str:
+def capture_robot_image(*args, **kwargs) -> str:
     """
     Capture an image from the robot's camera.
     The captured image becomes available to the LLM for the next call.
     
-    Args:
-        dummy_input: Unused parameter (for LangChain Tool compatibility)
-        
     Returns:
         Status message indicating successful capture
     """
@@ -69,6 +89,15 @@ def capture_robot_image(dummy_input: str = "") -> str:
         car = get_car_instance()
         img_bytes = car.capture_image()
         _latest_image = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
+        
+        # Update GUI viewer
+        try:
+            import sys
+            sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+            from gui_viewer import update_viewer
+            update_viewer(_latest_image)
+        except Exception as e:
+            pass  # Silently ignore GUI errors
         
         # Save to working memory for reference
         working_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'working')
@@ -189,13 +218,10 @@ def move_robot_backward(mode: str = "default") -> str:
         return f"Error moving backward: {str(e)}"
 
 
-def stop_robot_motion(dummy_input: str = "") -> str:
+def stop_robot_motion(*args, **kwargs) -> str:
     """
     Stop all robot motion immediately.
     
-    Args:
-        dummy_input: Unused parameter (for LangChain Tool compatibility)
-        
     Returns:
         Status message
     """
@@ -315,10 +341,11 @@ def create_robot_tools() -> List[Tool]:
         List of robot control and camera tools
     """
     return [
-        Tool(
-            name="capture_robot_image",
+        StructuredTool.from_function(
             func=capture_robot_image,
-            description="Capture an image from the robot's camera. The image will be available for analysis and saved to working memory. Call this before analyzing the robot's surroundings."
+            name="capture_robot_image",
+            description="Capture an image from the robot's camera. The image will be available for analysis and saved to working memory. Call this before analyzing the robot's surroundings.",
+            args_schema=None
         ),
         Tool(
             name="analyze_current_view",
@@ -345,10 +372,11 @@ def create_robot_tools() -> List[Tool]:
             func=move_robot_backward,
             description="Move the robot backward for 1 second at speed 40, then auto-stop. Pass 'continuous' to move continuously until manually stopped. Example: 'default' or 'continuous'"
         ),
-        Tool(
-            name="stop_robot_motion",
+        StructuredTool.from_function(
             func=stop_robot_motion,
-            description="Stop all robot motion immediately. Use this to halt continuous movement or turning."
+            name="stop_robot_motion",
+            description="Stop all robot motion immediately. Use this to halt continuous movement or turning.",
+            args_schema=None
         ),
     ]
 

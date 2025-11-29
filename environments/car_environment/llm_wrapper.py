@@ -70,6 +70,7 @@ def inject_image(user_input: str) -> Union[str, List[Dict[str, Any]]]:
     """
     # Try to get the latest robot image
     image_data = None
+    captured_image = None
     
     try:
         robot_image = get_latest_robot_image()
@@ -77,6 +78,7 @@ def inject_image(user_input: str) -> Union[str, List[Dict[str, Any]]]:
         if robot_image is not None:
             base64_data, image_format = encode_numpy_image_to_base64(robot_image)
             image_data = (base64_data, image_format, "latest robot camera capture")
+            captured_image = robot_image
     except Exception as e:
         # If robot image retrieval fails, try fallback
         pass
@@ -91,9 +93,20 @@ def inject_image(user_input: str) -> Union[str, List[Dict[str, Any]]]:
             if img_array is not None:
                 base64_data, image_format = encode_numpy_image_to_base64(img_array)
                 image_data = (base64_data, image_format, "fresh robot camera capture")
+                captured_image = img_array
         except Exception as e:
             # If direct capture fails, no image will be included
             pass
+    
+    # Update GUI viewer with the captured image
+    if captured_image is not None:
+        try:
+            import sys
+            sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+            from gui_viewer import update_viewer
+            update_viewer(captured_image)
+        except Exception as e:
+            pass  # Silently ignore GUI errors
     
     # If no image available, return original input
     if image_data is None:

@@ -77,12 +77,9 @@ def edit_context_prompt(new_content: str) -> str:
         return f"Error updating context_prompt.md: {str(e)}"
 
 
-def read_context_prompt(dummy_input: str = "") -> str:
+def read_context_prompt(*args, **kwargs) -> str:
     """
     Read the current contents of context_prompt.md.
-    
-    Args:
-        dummy_input: Unused parameter (for LangChain Tool compatibility)
     
     Returns:
         Current content or error message
@@ -112,10 +109,11 @@ def create_context_tools() -> List[Tool]:
             description="Edit the context_prompt.md file to update learned hints. Max 1000 chars OR 30 lines. You must balance keeping valuable old info with adding new insights. Input: new_content (the complete new content)",
             args_schema=EditContextPromptInput,
         ),
-        Tool(
-            name="read_context_prompt",
+        StructuredTool.from_function(
             func=read_context_prompt,
+            name="read_context_prompt",
             description="Read the current contents of context_prompt.md to see what hints are currently stored.",
+            args_schema=None
         ),
     ]
 

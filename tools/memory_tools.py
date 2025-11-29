@@ -48,13 +48,10 @@ def query_memory_store(doc_type: str, query: str, k: int = 4) -> str:
     return output
 
 
-def refresh_all_vector_stores(dummy_input: str = "") -> str:
+def refresh_all_vector_stores(*args, **kwargs) -> str:
     """
     Refresh all vector stores to pick up new or modified documents.
     Use this after adding or modifying documents in the semantic, procedural, episodic, or working directories.
-    
-    Args:
-        dummy_input: Unused parameter (for LangChain Tool compatibility)
     """
     if vector_store_manager is None:
         return "Error: Vector store manager not initialized."
@@ -69,13 +66,10 @@ def refresh_all_vector_stores(dummy_input: str = "") -> str:
         return f"Error refreshing vector stores: {str(e)}"
 
 
-def clear_working_memory_function(dummy_input: str = "") -> str:
+def clear_working_memory_function(*args, **kwargs) -> str:
     """
     Clear all contents of working memory.
     This is automatically called at the end of each session.
-    
-    Args:
-        dummy_input: Unused parameter (for LangChain Tool compatibility)
     """
     if vector_store_manager is None:
         return "Error: Vector store manager not initialized."

@@ -148,12 +148,9 @@ def execute_script(script_name: str, args: str = "") -> str:
         return f"Error executing script: {str(e)}"
 
 
-def list_scripts(dummy_input: str = "") -> str:
+def list_scripts(*args, **kwargs) -> str:
     """
     List all Python scripts in the scripts/ directory.
-    
-    Args:
-        dummy_input: Unused parameter (for LangChain Tool compatibility)
     
     Returns:
         List of available scripts
@@ -266,10 +263,11 @@ def create_scripting_tools() -> List[Tool]:
             description="Execute a Python script from the scripts/ directory. Inputs: script_name (string, e.g., 'my_script.py'), args (optional string, command-line arguments)",
             args_schema=ExecuteScriptInput,
         ),
-        Tool(
-            name="list_scripts",
+        StructuredTool.from_function(
             func=list_scripts,
+            name="list_scripts",
             description="List all Python scripts available in the scripts/ directory. No input required.",
+            args_schema=None
         ),
         StructuredTool(
             name="read_script",

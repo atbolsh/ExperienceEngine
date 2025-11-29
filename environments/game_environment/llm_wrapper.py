@@ -69,6 +69,7 @@ def inject_image(user_input: str) -> Union[str, HumanMessage]:
     """
     # Try to get the latest game image
     image_data = None
+    captured_image = None
     
     try:
         game_image = get_latest_game_image()
@@ -76,6 +77,7 @@ def inject_image(user_input: str) -> Union[str, HumanMessage]:
         if game_image is not None:
             base64_data, image_format = encode_numpy_image_to_base64(game_image)
             image_data = (base64_data, image_format, "latest game capture")
+            captured_image = game_image
     except Exception as e:
         # If game image retrieval fails, try fallback
         pass
@@ -97,9 +99,20 @@ def inject_image(user_input: str) -> Union[str, HumanMessage]:
             if img_array is not None:
                 base64_data, image_format = encode_numpy_image_to_base64(img_array)
                 image_data = (base64_data, image_format, "fresh game capture")
+                captured_image = img_array
         except Exception as e:
             # If direct capture fails, no image will be included
             pass
+    
+    # Update GUI viewer with the captured image
+    if captured_image is not None:
+        try:
+            import sys
+            sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+            from gui_viewer import update_viewer
+            update_viewer(captured_image)
+        except Exception as e:
+            pass  # Silently ignore GUI errors
     
     # If no image available, return original input
     if image_data is None:
