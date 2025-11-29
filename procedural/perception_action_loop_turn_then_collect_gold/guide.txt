@@ -1,0 +1,17 @@
+Title: Perception–Action Loop to Face and Collect Gold in 2D Game
+
+Purpose: Robustly align to the nearest gold and collect it while saving snapshots.
+
+Procedure:
+1) Capture: use capture_game_image to snapshot current state. Save path auto-added to working/.
+2) Check orientation: call analyze_current_game_view with question: "Is the agent facing the nearest gold? If not, which direction (CW/CCW) and approx how many small turns?"
+3) Turn stepwise: perform 1 turn (turn_game_clockwise or turn_game_counterclockwise) based on analysis. After each turn, capture_game_image again. Repeat step 2 until the gold is roughly centered ahead.
+4) Move stepwise: call move_game_forward once. Immediately capture_game_image.
+5) Verify progress: analyze_current_game_view with question: "Is the gold closer or collected (disappeared)? Are any walls in the path?"
+6) If gold remains: repeat steps 4–5. If misaligned, go back to steps 2–3.
+7) Termination: when analysis reports the gold disappeared or score increased, take a final capture and report success.
+
+Notes:
+- Avoid long chained actions; interleave analysis with each turn/move.
+- Ask focused questions to analyze_current_game_view for concise guidance.
+- If no gold is visible, rotate in place (e.g., up to 60 turns) with capture at each step until gold appears.

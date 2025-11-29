@@ -24,10 +24,8 @@ def initialize_game(game = None):
         if game is None:
             print("Initializing game environment...")
             os.environ['SDL_VIDEODRIVER'] = 'dummy'  # Run pygame in headless mode
-            from .discreteEngine import discreteGame
-            from .levels.skeleton import Settings
-            settings = Settings(gameSize=64)
-            game_instance = discreteGame(settings=settings, envMode=True)
+            from .init_game import create_default_game
+            game_instance = create_default_game()
         else:
             game_instance = game
         print("Game environment initialized successfully.")

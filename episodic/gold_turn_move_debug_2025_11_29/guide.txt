@@ -1,0 +1,7 @@
+Session: Game gold alignment and movement debug.
+Context: User asked me to rotate to face the gold, move to collect it, and save snapshots. An attached image showed the agent (green circle with red eye) near bottom-center, gold up-right; agent was facing slightly left of the gold.
+What happened: I confirmed orientation (needed small clockwise turns). Execution failed partway (“Agent stopped due to max iterations”), so the gold wasn’t collected. Snapshots were saved earlier to working/ as part of debugging.
+Surprises/Issues: Long action chains can hit iteration limits; using analyze_current_game_view with a focused question gives better guidance than default. We should interleave short actions with captures.
+What worked: Referencing the attached image to estimate direction; planning to turn clockwise 1–2 steps, then move in small forward steps while capturing after each action.
+Next time: Use a tight perception–action loop: capture → analyze (ask “Is gold centered/ahead?”) → turn small (CW/CCW 1 step) until centered → move forward 1 step, repeat until gold disappears.
+Outcome: Did not collect gold; session used for process debugging and establishing procedures.

@@ -1,0 +1,6 @@
+Session: Turn-and-collect gold debug in 2D game.
+- Prompt: Determine facing relative to a single gold, then turn toward it and move forward to collect, saving snapshots along the way.
+- Visual: Attached image shows agent (green circle with red eye) near bottom-center; gold slightly above-right. Facing mostly upward but a bit left of the gold.
+- Actions/Outcome: Began by confirming orientation. Attempted to execute a perception→turn→move loop, but the run halted due to reaching max iterations before collection (gold not eaten). A snapshot was saved earlier in working/.
+- Surprises: The action chain hit iteration limits quickly; reinforces keeping steps short with frequent perception checks.
+- What to improve next time: (1) After each single turn or move, immediately capture and analyze to re-align. (2) Cap forward moves to small bursts (e.g., 1–2 steps) with re-checks. (3) Prefer analyze_current_game_view with specific questions (e.g., “Am I directly facing the nearest gold?”). (4) Save a snapshot after every action.

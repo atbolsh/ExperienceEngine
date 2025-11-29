@@ -1,0 +1,10 @@
+Key facts about the 2D gold-collection game:
+- Agent: green circle; red dot indicates facing direction.
+- Gold: yellow/gold dot(s); collecting occurs when the agent moves onto the gold’s position. Gold disappears upon collection and score increases.
+- Walls: black rectangles; block movement; navigate around.
+- Camera: 64x64 top-down snapshot of entire world; use capture_game_image.
+- Analysis tool: analyze_current_game_view returns a textual description; best used with a focused question (e.g., "Where is the nearest gold relative to agent (left/right/ahead)?").
+- Turning: turn_game_clockwise/turn_game_counterclockwise rotate ~6° per call; use stepwise turning to align.
+- Movement: move_game_forward/backward move along current facing direction.
+- Debug tip: Reference attached images directly when present to answer visual questions.
+- Working memory images are from the current session; move essential info to long-term memories before session end.
