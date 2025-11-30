@@ -93,7 +93,7 @@ def capture_game_image(*args, **kwargs) -> str:
     try:
         game = get_game_instance()
         # Get the current game state as numpy array
-        # getData returns array with shape (height, width, 3) and values in [0, 1]
+        # getData returns array with shape (width, height, 3) and values in [0, 1]
         img_array = game.getData()
         
         # Scale to 0-255
