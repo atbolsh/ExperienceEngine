@@ -8,23 +8,11 @@ from .discreteEngine import discreteGame
 
 
 def create_default_game():
-    """Create a game with default settings: 224x224, no internal walls, 1-3 gold."""
-    # Create a temporary game instance to access its helper methods
-    temp_game = discreteGame(envMode=True)
+    """Create a game with tool_use_advanced_2_5 level from skeleton.py for testing."""
+    from .levels.skeleton import tool_use_advanced_2_5
     
-    # Use random_settings with gameSize=224 as the base
-    settings = temp_game.random_settings(gameSize=224, restrict_angles=False)
-    
-    # Override walls to have no internal walls (only boundary walls)
-    settings.walls = temp_game.random_walls(restrict_angles=False, num_extra_walls=0)
-    
-    # Override gold to have 1-3 pieces
-    num_gold = random.randint(1, 3)
-    settings.gold = temp_game.random_gold(settings.walls, max_num_gold=num_gold, 
-                                          agent_x=settings.agent_x, agent_y=settings.agent_y)
-    
-    # Create the game with the modified settings
-    game = discreteGame(settings=settings, envMode=True)
+    # Create the game with the predefined level
+    game = discreteGame(settings=tool_use_advanced_2_5, envMode=True)
     return game
 
 
