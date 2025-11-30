@@ -89,8 +89,7 @@ def inject_image(user_input: str) -> Union[str, HumanMessage]:
             import numpy as np
             img_array = game.getData()
             
-            # Convert from (width, height, 3) to (height, width, 3) and scale to 0-255
-            img_array = np.transpose(img_array, (1, 0, 2))
+            # Scale to 0-255
             img_array = (img_array * 255).astype(np.uint8)
             
             # Convert RGB to BGR for OpenCV
@@ -104,13 +103,32 @@ def inject_image(user_input: str) -> Union[str, HumanMessage]:
             # If direct capture fails, no image will be included
             pass
     
-    # Update GUI viewer with the captured image
+    # Update GUI viewer with the captured image using blowup for crisp rendering
     if captured_image is not None:
         try:
             import sys
             sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
             from gui_viewer import update_viewer
-            update_viewer(captured_image)
+            
+            # Use blowup method for crisp high-resolution rendering
+            game = get_game_instance()
+            
+            # Calculate scale factor to make smaller dimension ~400 pixels
+            h, w = captured_image.shape[:2]
+            min_side = min(h, w)
+            scale_factor = max(1.0, 400.0 / min_side)
+            
+            # Get high-resolution version using blowup
+            import numpy as np
+            hires_array = game.blowup(scale_factor)
+            
+            # Scale to 0-255
+            hires_array = (hires_array * 255).astype(np.uint8)
+            
+            # Convert RGB to BGR for OpenCV
+            hires_array = cv2.cvtColor(hires_array, cv2.COLOR_RGB2BGR)
+            
+            update_viewer(hires_array)
         except Exception as e:
             pass  # Silently ignore GUI errors
     

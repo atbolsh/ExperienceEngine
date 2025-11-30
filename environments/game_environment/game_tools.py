@@ -93,11 +93,10 @@ def capture_game_image(*args, **kwargs) -> str:
     try:
         game = get_game_instance()
         # Get the current game state as numpy array
-        # getData returns array with shape (width, height, 3) and values in [0, 1]
+        # getData returns array with shape (height, width, 3) and values in [0, 1]
         img_array = game.getData()
         
-        # Convert from (width, height, 3) to (height, width, 3) and scale to 0-255
-        img_array = np.transpose(img_array, (1, 0, 2))  # Swap width and height
+        # Scale to 0-255
         img_array = (img_array * 255).astype(np.uint8)
         
         # Convert RGB to BGR for OpenCV
@@ -105,12 +104,28 @@ def capture_game_image(*args, **kwargs) -> str:
         
         _latest_image = img_array
         
-        # Update GUI viewer
+        # Update GUI viewer with high-resolution version for game
         try:
             import sys
             sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
             from gui_viewer import update_viewer
-            update_viewer(img_array)
+            
+            # Use blowup method for crisp high-resolution rendering
+            # Calculate scale factor to make smaller dimension ~400 pixels
+            h, w = img_array.shape[:2]
+            min_side = min(h, w)
+            scale_factor = max(1.0, 400.0 / min_side)
+            
+            # Get high-resolution version using blowup
+            hires_array = game.blowup(scale_factor)
+            
+            # Scale to 0-255
+            hires_array = (hires_array * 255).astype(np.uint8)
+            
+            # Convert RGB to BGR for OpenCV
+            hires_array = cv2.cvtColor(hires_array, cv2.COLOR_RGB2BGR)
+            
+            update_viewer(hires_array)
         except Exception as e:
             pass  # Silently ignore GUI errors
         
@@ -239,8 +254,7 @@ def analyze_current_game_view(query: str = "") -> str:
         game = get_game_instance()
         img_array = game.getData()
         
-        # Convert from (width, height, 3) to (height, width, 3) and scale to 0-255
-        img_array = np.transpose(img_array, (1, 0, 2))
+        # Scale to 0-255
         img_array = (img_array * 255).astype(np.uint8)
         
         # Convert RGB to BGR for OpenCV
@@ -251,6 +265,40 @@ def analyze_current_game_view(query: str = "") -> str:
         
         # Update the latest image
         _latest_image = img_array
+        
+        # Update GUI viewer with high-resolution version for game
+        try:
+            import sys
+            sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+            from gui_viewer import update_viewer
+            
+            # Use blowup method for crisp high-resolution rendering
+            # Calculate scale factor to make smaller dimension ~400 pixels
+            h, w = img_array.shape[:2]
+            min_side = min(h, w)
+            scale_factor = max(1.0, 400.0 / min_side)
+            
+            # Get high-resolution version using blowup
+            hires_array = game.blowup(scale_factor)
+            
+            # Scale to 0-255
+            hires_array = (hires_array * 255).astype(np.uint8)
+            
+            # Convert RGB to BGR for OpenCV
+            hires_array = cv2.cvtColor(hires_array, cv2.COLOR_RGB2BGR)
+            
+            update_viewer(hires_array)
+        except Exception as e:
+            pass  # Silently ignore GUI errors
+            hires_array = np.transpose(hires_array, (1, 0, 2))
+            hires_array = (hires_array * 255).astype(np.uint8)
+            
+            # Convert RGB to BGR for OpenCV
+            hires_array = cv2.cvtColor(hires_array, cv2.COLOR_RGB2BGR)
+            
+            update_viewer(hires_array)
+        except Exception as e:
+            pass  # Silently ignore GUI errors
         
         # Save to working memory
         working_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'working')

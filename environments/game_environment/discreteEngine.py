@@ -401,7 +401,7 @@ class discreteGame:
         return obs, reward, terminated, truncated, info
 
     def getData(self):
-        return pygame.surfarray.array3d(self.windowSurface)/255
+        return (pygame.surfarray.array3d(self.windowSurface)/255).transpose(1, 0, 2)
 
     def blowup(self, factor):
         bigSettings = deepcopy(self.settings)
