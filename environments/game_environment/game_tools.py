@@ -38,6 +38,10 @@ def initialize_game(game = None):
             if gui_enabled:
                 initialize_viewer(enabled=True, window_name="Game Environment")
                 print("GUI viewer enabled.")
+                
+                # Capture and display initial image
+                capture_game_image()
+                print("Initial game view captured and displayed.")
         except Exception as e:
             print(f"GUI viewer could not be initialized: {e}")
         

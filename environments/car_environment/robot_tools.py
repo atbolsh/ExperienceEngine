@@ -38,6 +38,10 @@ def initialize_car():
             if gui_enabled:
                 initialize_viewer(enabled=True, window_name="Car Environment")
                 print("GUI viewer enabled.")
+                
+                # Capture and display initial image
+                capture_robot_image()
+                print("Initial car view captured and displayed.")
         except Exception as e:
             print(f"GUI viewer could not be initialized: {e}")
         

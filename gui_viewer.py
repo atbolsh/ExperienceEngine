@@ -86,9 +86,21 @@ class EnvironmentViewer:
             # Ensure image is in the correct format
             if len(image.shape) == 2:
                 # Grayscale to BGR
-                self.current_image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
-            else:
-                self.current_image = image
+                image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+            
+            # Resize image so the smaller side is 400 pixels
+            h, w = image.shape[:2]
+            min_side = min(h, w)
+            
+            # Calculate scaling factor to make smaller side 400 pixels
+            scale = 400.0 / min_side
+            
+            # Calculate new dimensions
+            new_w = int(w * scale)
+            new_h = int(h * scale)
+            
+            # Resize the image
+            self.current_image = cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
     
     def stop(self):
         """Stop the viewer thread."""
