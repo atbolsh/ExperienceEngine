@@ -1,0 +1,8 @@
+- Agent rendering: green circle with red eye indicates facing direction.
+- Gold: yellow/gold dots; collect by moving onto them.
+- Walls: black rectangles block movement.
+- Turn step: each turn_clockwise/counterclockwise rotates ~6 degrees.
+- Camera: analyze_current_game_view returns full 64x64 world from top-down; images attached represent entire state.
+- Positioning cues: If gold appears to the right of the red eye direction, rotate clockwise; if left, counterclockwise; if centered ahead, move forward.
+- Avoid long action chains due to iteration/time limits; interleave perception and action.
+- Working memory images are from current session only; save important findings to long-term memories before ending session.
