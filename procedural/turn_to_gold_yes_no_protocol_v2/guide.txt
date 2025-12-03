@@ -1,0 +1,26 @@
+Title: Turn-to-Gold Protocol (Yes/No Alignment + Single Direction Choice)
+
+Purpose: Reliably face and reach gold in the 2D game using robust analyzer prompts.
+
+Protocol:
+1) Query alignment
+   - Use analyze_current_game_view with question:
+     "we are playing as a green agent with a red eye. It moves in the direction of the red eye. Is the eye (relative to the green body) facing roughly toward the gold piece? Finish the answer with a 'yes' or a 'no'".
+2) If answer == "yes":
+   - move_game_forward 2-3 times
+   - Re-run step 1 (rough alignment only; you may need to re-align)
+   - Stop when analyzer begins to return phrases like "there is no gold piece" (indicates collection)
+3) If answer == "no":
+   - Ask ONCE:
+     "would it be faster to turn clockwise or counterclockwise? Answer 'clockwise' or 'counterclockwise'".
+   - Commit to that direction for the remainder of this alignment chain.
+   - Turn one step at a time (turn_game_clockwise or turn_game_counterclockwise), re-checking with step 1 after each single turn until "yes".
+4) Repeat the loop until gold is collected.
+
+Notes:
+- Keep the loop tight: one action between checks.
+- Avoid long action chains.
+- This exact prompt took many iterations to perfect; only this procedure should be used.
+
+References:
+- See images in this memory (added from working) showing typical alignment and approach frames.

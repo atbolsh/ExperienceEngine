@@ -1,0 +1,11 @@
+Title: Gold Alignment and Collection Facts (2025-12-03)
+
+Key facts:
+- The agent is a green circle with a red eye; the movement direction equals the eye’s facing direction.
+- Robust alignment prompt for the analyzer (use exact wording):
+  "we are playing as a green agent with a red eye. It moves in the direction of the red eye. Is the eye (relative to the green body) facing roughly toward the gold piece? Finish the answer with a 'yes' or a 'no'".
+- If analyzer replies "no", ask ONCE: "would it be faster to turn clockwise or counterclockwise? Answer 'clockwise' or 'counterclockwise'". Commit to the chosen direction for that chain.
+- Use single-step turns between checks; avoid long action chains.
+- If analyzer starts returning "there is no gold piece", treat it as a success signal that the gold was collected (or is no longer visible because it was collected).
+- When aligned ("yes"), move forward 2–3 steps, then re-check alignment and repeat.
+- This exact prompt took many iterations to perfect; only this procedure should be used.

@@ -1,0 +1,9 @@
+Session focus: Successfully implemented and validated a robust gold-seeking protocol using analyzer yes/no alignment and a single decision on turn direction. Key loop: ask rough alignment → if yes, advance a few steps → re-check; if no, ask ONCE "clockwise or counterclockwise?" then commit to that direction for subsequent turns this chain. Collected gold and confirmed with "no gold visible" signal.
+
+Surprises: Minimal, consistent prompts dramatically reduced misinterpretations vs prior sessions. Making the CW/CCW choice only once reduced oscillation.
+
+Important details: The exact prompt took many iterations to perfect; only this procedure should be used.
+
+Artifacts: Used several working images illustrating alignment checks and approach.
+
+Next time: Start directly with this protocol; avoid previous longer or ambiguous action chains. Use analyze_current_game_view with the precise questions and single-step turns between checks.

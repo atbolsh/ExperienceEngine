@@ -1,0 +1,16 @@
+Session goal: Reach gold using strict yes/no alignment query and single-choice turn direction.
+Process:
+- Asked analyzer: “Is the eye facing roughly toward the gold? yes/no” → no.
+- Asked ONCE: “faster to turn clockwise or counterclockwise?” → counterclockwise.
+- Turned counterclockwise in single steps, re-asking the yes/no alignment question each time.
+- After several turns, got “yes”.
+- Moved forward → Collected 1 gold.
+- Analyzer then reported no visible gold piece, indicating objective achieved.
+Observations & Surprises:
+- Multiple sequential “no” responses even as heading changed slightly; persistence worked.
+- The final analyzer message said “no visible gold piece” (success signal) but auto-appended a trailing “No” once—still usable as stop condition.
+Lessons:
+- Ask direction (CW/CCW) only once per chain; then stick to that direction until alignment is “yes”.
+- Use short loop: analyze (yes/no) → if yes, move forward a few steps; else turn 1 step in chosen direction; repeat.
+- Stop when analyzer reports no gold piece visible (likely collected).
+Update: This exact prompt took many iterations to perfect; only this procedure should be used. Added example frames from working memory to this episodic record.

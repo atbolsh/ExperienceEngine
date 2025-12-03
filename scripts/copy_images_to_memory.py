@@ -2,24 +2,21 @@ import sys, os, shutil
 
 def main():
     if len(sys.argv) < 3:
-        print("Usage: copy_images_to_memory.py <dest_folder> <src_image1> [<src_image2> ...]")
+        print('Usage: copy_images_to_memory.py <dest_dir> <src_file1> [<src_file2> ...]')
         sys.exit(1)
-    dest = sys.argv[1]
-    srcs = sys.argv[2:]
-    os.makedirs(dest, exist_ok=True)
-    copied = []
-    for src in srcs:
+    dest_dir = sys.argv[1]
+    src_files = sys.argv[2:]
+    os.makedirs(dest_dir, exist_ok=True)
+    results = []
+    for src in src_files:
         if not os.path.isfile(src):
-            print(f"WARN: source not found: {src}")
+            results.append(f'MISSING:{src}')
             continue
         base = os.path.basename(src)
-        dest_path = os.path.join(dest, base)
-        try:
-            shutil.copyfile(src, dest_path)
-            copied.append(dest_path)
-        except Exception as e:
-            print(f"ERROR copying {src} -> {dest_path}: {e}")
-    print("COPIED:" + "\n".join(copied))
+        dest_path = os.path.join(dest_dir, base)
+        shutil.copy2(src, dest_path)
+        results.append(f'COPIED:{src}->${dest_path}')
+    print('\n'.join(results))
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()

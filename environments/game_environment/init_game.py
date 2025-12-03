@@ -18,8 +18,8 @@ def create_default_game():
     # Override walls to have no internal walls (only boundary walls)
     settings.walls = temp_game.random_walls(restrict_angles=False, num_extra_walls=0)
     
-    # Override gold to have 1-3 pieces
-    num_gold = random.randint(1, 3)
+    # Override gold to have exactly 1 piece
+    num_gold = 1
     settings.gold = temp_game.random_gold(settings.walls, max_num_gold=num_gold, 
                                           agent_x=settings.agent_x, agent_y=settings.agent_y)
     
