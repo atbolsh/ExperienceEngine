@@ -81,6 +81,44 @@ def get_game_instance():
     return game_instance
 
 
+def _update_gui_viewer():
+    """Update the GUI viewer with the current game state (without saving files)."""
+    try:
+        game = get_game_instance()
+        
+        # Get the current game state as numpy array
+        img_array = game.getData()
+        
+        # Scale to 0-255
+        img_array = (img_array * 255).astype(np.uint8)
+        
+        # Convert RGB to BGR for OpenCV
+        img_array = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
+        
+        # Update GUI viewer with high-resolution version
+        import sys
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+        from gui_viewer import update_viewer
+        
+        # Calculate scale factor to make smaller dimension ~400 pixels
+        h, w = img_array.shape[:2]
+        min_side = min(h, w)
+        scale_factor = max(1.0, 400.0 / min_side)
+        
+        # Get high-resolution version using blowup
+        hires_array = game.blowup(scale_factor)
+        
+        # Scale to 0-255
+        hires_array = (hires_array * 255).astype(np.uint8)
+        
+        # Convert RGB to BGR for OpenCV
+        hires_array = cv2.cvtColor(hires_array, cv2.COLOR_RGB2BGR)
+        
+        update_viewer(hires_array)
+    except Exception as e:
+        pass  # Silently ignore GUI errors
+
+
 def capture_game_image(*args, **kwargs) -> str:
     """
     Capture an image from the game's current state.
@@ -158,6 +196,7 @@ def move_game_forward(*args, **kwargs) -> str:
     try:
         game = get_game_instance()
         gold_collected = game.stepForward()
+        _update_gui_viewer()
         
         if gold_collected > 0:
             return f"Moved forward. Collected {gold_collected} gold! Total reward: {game.reward}"
@@ -177,6 +216,7 @@ def move_game_backward(*args, **kwargs) -> str:
     try:
         game = get_game_instance()
         gold_collected = game.stepBackward()
+        _update_gui_viewer()
         
         if gold_collected > 0:
             return f"Moved backward. Collected {gold_collected} gold! Total reward: {game.reward}"
@@ -196,6 +236,7 @@ def turn_game_clockwise(*args, **kwargs) -> str:
     try:
         game = get_game_instance()
         game.swivel_clock()
+        _update_gui_viewer()
         return "Turned clockwise."
     except Exception as e:
         return f"Error turning clockwise: {str(e)}"
@@ -211,6 +252,7 @@ def turn_game_counterclockwise(*args, **kwargs) -> str:
     try:
         game = get_game_instance()
         game.swivel_anticlock()
+        _update_gui_viewer()
         return "Turned counterclockwise."
     except Exception as e:
         return f"Error turning counterclockwise: {str(e)}"
