@@ -1,0 +1,30 @@
+Goal: From a top-down game image, place small purple dots just inside the white playing field near each corner of internal (axis-aligned) walls, and save as annotated_view.jpg.
+
+Tools/Scripts:
+1) scripts/save_data_url_to_file.py — decodes provided data:image/*;base64,... to input_view.jpg
+2) scripts/annotate_wall_corners_smart.py — reads input_view.jpg and writes annotated_view.jpg
+
+Algorithm (annotate_wall_corners_smart.py):
+- Convert image to grayscale.
+- Build white_mask = gray > WHITE_THRESH (default 220).
+- Build wall_mask = gray < BLACK_THRESH (default 50); morphological close to clean.
+- Find external contours on wall_mask; for each contour, get boundingRect.
+- Skip walls touching image border (not "internal").
+- For each rect corner (TL, TR, BL, BR), search outward along the diagonal direction (up-left, up-right, down-left, down-right) up to MAX_SEARCH pixels (default 6) to find the first pixel that is white and not wall.
+- If found, draw a small filled circle (DOT_RADIUS=2) in purple (BGR 255,0,255).
+- Save to annotated_view.jpg.
+
+Tuning:
+- WHITE_THRESH (220-245 typical) — relax if the white field is slightly gray.
+- BLACK_THRESH (40-80 typical) — raise if walls aren’t detected; lower if background noise triggers.
+- MAX_SEARCH (3-8) — increase if corners are flush against white and need a few pixels to land in field.
+- DOT_RADIUS — adjust marker size.
+
+Usage:
+- Put the target image at input_view.jpg (or update script to accept args).
+- Run: python scripts/annotate_wall_corners_smart.py
+- Output: annotated_view.jpg in project root.
+
+Notes:
+- Assumes walls are horizontal/vertical (axis-aligned), matching the environment.
+- Ignores corners whose outward diagonal lands in another wall or outside the white field (as required).

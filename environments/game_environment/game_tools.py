@@ -24,8 +24,8 @@ def initialize_game(game = None):
         if game is None:
             print("Initializing game environment...")
             os.environ['SDL_VIDEODRIVER'] = 'dummy'  # Run pygame in headless mode
-            from .init_game import create_default_game
-            game_instance = create_default_game()
+            from .init_game import default_game
+            game_instance = default_game()
         else:
             game_instance = game
         

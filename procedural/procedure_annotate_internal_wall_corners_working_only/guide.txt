@@ -1,0 +1,19 @@
+Goal: Produce working/annotated_view.jpg that marks safe, off-corner purple dots for every internal wall corner in the current game image.
+
+Steps:
+1) Capture latest frame: use capture_game_image (image lands in working/ as latest_capture.jpg and/or game_capture_*.jpg).
+2) Run script annotate_internal_wall_corners_clearance.py (reads only from working/, writes only to working/annotated_view.jpg).
+3) Detection:
+   - Build white mask (>= WHITE_THRESH) and wall mask (<= BLACK_THRESH), exclude outer border contact to keep only internal walls.
+   - Detect rectangles (axis-aligned) and get their corners.
+4) Agent radius: HSV-segment the green agent; estimate radius from its blob; clamp to [3, 9].
+5) Collision mask: dilate wall mask by agent_radius.
+6) For each corner, search along outward diagonal/ring starting at offset = agent_radius + 1 up to max_offset = floor(1.2 × agent_radius):
+   - Place dot at first pixel that is white AND not in wall mask AND not in collision mask.
+   - If none found within max_offset, skip the corner.
+7) Draw 2–3 px purple dots; save only working/annotated_view.jpg.
+8) Never write outside working/; never create alias files.
+
+Notes:
+- Use MAX_OFFSET_MULT = 1.2; configurable.
+- If detection ambiguous, generate diagnostic text logs (not images) in working/.

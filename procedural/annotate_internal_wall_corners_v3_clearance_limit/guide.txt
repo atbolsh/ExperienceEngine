@@ -1,0 +1,19 @@
+Goal: Place purple dots near each internal wall corner, inside the white field, offset far enough so that the agent centered on the dot won’t collide. Only operate on the current game image and only save into working/.
+
+Procedure:
+1) Capture latest game frame: use capture_game_image (writes working/latest_capture.jpg).
+2) Run scripts/annotate_internal_wall_corners_clearance.py.
+3) Script behavior:
+   - Reads only working/latest_capture.jpg (fallback: newest working/game_capture_*.jpg).
+   - Detects internal walls (axis-aligned, dark rectangles not touching outer border).
+   - Estimates agent radius via HSV-green; clamps to [3,9].
+   - Builds a collision mask (dilated walls by agent radius).
+   - For each wall corner, search ring-by-ring in the outward quadrant starting at d_start = agent_radius + 1, and STOP at d_limit = floor(1.2 * agent_radius). If no valid white, non-wall, non-collision pixel is found within [d_start, d_limit], SKIP placing a dot for that corner.
+   - Draws purple dots (radius 2 px) at valid points.
+   - Saves only to working/annotated_view.jpg.
+4) Never write images outside working/; do not create the misspelled filename.
+
+Notes:
+- Thresholds: WHITE_THRESH=220, BLACK_THRESH=50.
+- Tunables: RADIUS_LIMIT_MULT=1.2 if later levels require tighter/looser limits.
+- Re-run loop: capture_game_image -> execute_script('annotate_internal_wall_corners_clearance.py') -> open working/annotated_view.jpg.

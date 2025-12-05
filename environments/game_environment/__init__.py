@@ -18,9 +18,11 @@ from .game_tools import (
 )
 
 from .init_game import (
-    create_default_game,
+    random_bare_game,
+    create_random_two_walls_game,
     create_game_with_gold,
-    create_random_game
+    create_random_game,
+    default_game
 )
 
 from .llm_wrapper import inject_image, encode_image_to_base64, encode_numpy_image_to_base64
@@ -37,9 +39,11 @@ __all__ = [
     'get_latest_game_image',
     'analyze_current_game_view',
     'create_game_tools',
-    'create_default_game',
+    'random_bare_game',
+    'create_random_two_walls_game',
     'create_game_with_gold',
     'create_random_game',
+    'default_game',
     'inject_image',
     'encode_image_to_base64',
     'encode_numpy_image_to_base64'

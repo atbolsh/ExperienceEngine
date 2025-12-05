@@ -1,0 +1,27 @@
+Goal: Place purple markers near every internal wall corner with safe clearance so the agent (as a circle) centered on a marker would not collide with that corner. Always use the current game image from working/ and always save outputs into working/ (including the exact filename 'anotated_view.jpg').
+
+Procedure:
+1) Capture current frame
+   - Use capture_game_image (creates working/latest_capture.jpg)
+2) Run annotator
+   - execute_script('annotate_internal_wall_corners_clearance.py')
+   - The script reads working/latest_capture.jpg (fallback: newest working/game_capture_*.jpg)
+   - It auto-detects internal walls (axis-aligned dark rectangles not touching outer border)
+   - Estimates agent radius from the green blob (HSV), clamps to [3,9]
+   - Builds a collision mask by dilating walls by agent radius
+   - For each wall corner, searches along the outward diagonal starting from min_offset=(agent_radius+1) for the first pixel that is:
+       • inside white field
+       • not in a wall
+       • not in the collision mask (i.e., has clearance)
+     If found, draws a small purple dot there (BGR 255,0,255)
+   - Saves outputs:
+       • working/anotated_view.jpg (required name)
+       • working/annotated_view.jpg (convenience)
+       • annotated_view.jpg at repo root (convenience)
+3) Inspect result
+   - Open working/anotated_view.jpg to view markers.
+
+Notes:
+- If a corner has no safe pixel within search range (tight space), it is skipped (consistent with clearance rule).
+- Tunables: WHITE_THRESH=220, BLACK_THRESH=50, MAX_SEARCH=20, DOT_RADIUS=2, agent radius clamp [3,9].
+- Re-run capture_game_image before executing the script to ensure freshest state.

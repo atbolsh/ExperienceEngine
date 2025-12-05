@@ -1,0 +1,26 @@
+Purpose: Produce annotated_view.jpg where every corner of each internal, axis-aligned wall has a purple dot placed just inside the white playing field. Always operates on the CURRENT game image from working/.
+
+Workflow:
+1) Capture latest game state
+   - Use capture_game_image tool. This writes working/latest_capture.jpg (and a timestamped backup).
+
+2) Run the annotator script
+   - scripts/annotate_internal_wall_corners.py
+   - Behavior:
+     • Loads working/latest_capture.jpg (fallback: most recent working/game_capture_*.jpg).
+     • Builds masks: white field (gray ≥ WHITE_THRESH), wall mask (gray ≤ BLACK_THRESH).
+     • Finds internal walls as dark contours whose bounding rect DOES NOT touch the image border (outer boundary).
+     • For each wall’s 4 bounding-rect corners, steps diagonally outward (tl↘, tr↙, bl↗, br↖) up to MAX_SEARCH pixels and picks the FIRST pixel that is white and not wall; draws a purple dot (radius DOT_RADIUS) there.
+     • Skips corners where no valid white pixel is found (e.g., blocked by other walls/out of bounds), per “ignore if it’s in another wall”.
+   - Output:
+     • annotated_view.jpg (repo root)
+     • working/annotated_view.jpg (same image)
+     • Console: “Saved annotated_view.jpg with N purple dots. Internal walls found: M”.
+
+Tunable parameters (in script):
+- WHITE_THRESH (default 220), BLACK_THRESH (default 50), DOT_RADIUS (default 2), MAX_SEARCH (default 8).
+
+Usage pattern each time:
+- capture_game_image → execute_script('annotate_internal_wall_corners.py') → open working/annotated_view.jpg.
+
+Assumptions: Internal walls are horizontal/vertical black rectangles; outer boundary is a thick black border touching image edges.

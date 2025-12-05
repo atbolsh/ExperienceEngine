@@ -7,8 +7,8 @@ import random
 from .discreteEngine import discreteGame
 
 
-def create_default_game():
-    """Create a game with default settings: 224x224, no internal walls, 1-3 gold."""
+def random_bare_game():
+    """Create a game with default settings: 224x224, no internal walls, 1 gold."""
     # Create a temporary game instance to access its helper methods
     temp_game = discreteGame(envMode=True)
     
@@ -26,6 +26,34 @@ def create_default_game():
     # Create the game with the modified settings
     game = discreteGame(settings=settings, envMode=True)
     return game
+
+
+def create_random_two_walls_game():
+    """Create a game with 224x224, exactly 2 horizontal/vertical internal walls, 1 gold."""
+    # Create a temporary game instance to access its helper methods
+    temp_game = discreteGame(envMode=True)
+    
+    # Use random_settings with gameSize=224 and restrict_angles=True
+    settings = temp_game.random_settings(gameSize=224, restrict_angles=True)
+    
+    # Build walls: boundary walls + exactly 2 internal walls (horizontal/vertical)
+    walls = temp_game.random_side_walls()
+    walls.append(temp_game.random_wall(restrict_angles=True))
+    walls.append(temp_game.random_wall(restrict_angles=True))
+    settings.walls = walls
+    
+    # Override gold to have exactly 1 piece
+    num_gold = 1
+    settings.gold = temp_game.random_gold(settings.walls, max_num_gold=num_gold, 
+                                          agent_x=settings.agent_x, agent_y=settings.agent_y)
+    
+    # Create the game with the modified settings
+    game = discreteGame(settings=settings, envMode=True)
+    return game
+
+
+# Default game creation function - change this to switch between different game modes
+default_game = create_random_two_walls_game
 
 
 def create_game_with_gold():

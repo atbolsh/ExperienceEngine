@@ -1,0 +1,8 @@
+- All image I/O must be confined to working/; no reads or writes outside working/.
+- Output image name is working/annotated_view.jpg (single canonical file).
+- Internal walls are axis-aligned dark rectangles that do not touch the outer border.
+- The agent is a green circle with a red eye; estimate radius via HSV segmentation of green.
+- A safe dot is: (a) on white field, (b) not on a wall, (c) outside the collision mask made by dilating wall mask by agent radius.
+- Place dots off the corners; start search at offset = agent_radius + 1, and never search beyond floor(1.2 × agent_radius) from the corner along the outward diagonal (or ring around that distance). If none found, skip the corner.
+- Do not place dots for corners whose outward projection lands in another wall or outside the field.
+- All internal walls’ corners must be considered; right-side coverage needed attention in past versions.

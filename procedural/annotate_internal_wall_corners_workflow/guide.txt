@@ -1,0 +1,17 @@
+Goal: Create purple guidance dots near each corner of internal (axis-aligned) walls on the latest game capture, with enough clearance that the agent centered on a dot cannot collide with the corner. Always operate in working/ and write only working/annotated_view.jpg.
+
+Procedure:
+1) Capture current state: use capture_game_image (this updates working/latest_capture.jpg).
+2) Run the annotator script: execute_script('annotate_internal_wall_corners_clearance.py').
+   - It reads working/latest_capture.jpg (or newest working/game_capture_*.jpg).
+   - It detects internal walls (rects that do not touch the outer border).
+   - Estimates agent radius from green agent (HSV), clamps to [3,9].
+   - Builds a collision mask by dilating walls by the agent radius.
+   - For each wall corner, starts at min_offset = agent_radius + 1 and performs a ring (Chebyshev) search in the outward quadrant up to MAX_SEARCH pixels to find the first white, non-wall, non-collision pixel.
+   - Draws a small purple dot at that pixel.
+3) Result is saved only to working/annotated_view.jpg. No other files are written outside working/.
+
+Notes:
+- MAX_SEARCH default 24; increase if some corners are still missing.
+- Thresholds: WHITE_THRESH=220, BLACK_THRESH=50. Adjust if levels vary.
+- Do not save or rely on any 'anotated_view.jpg' filename; the canonical output is annotated_view.jpg only in working/.

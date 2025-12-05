@@ -1,0 +1,20 @@
+Session focus: Build a reliable, WORKING-only annotator that marks safe navigation points near internal wall corners with purple dots.
+
+Key outcomes:
+- Enforced strict I/O policy: read only from working/, write only to working/annotated_view.jpg. Removed misspelled output and any root-path writes.
+- Corner-dot logic upgraded: dots are placed off-corner with collision clearance based on estimated agent radius; search halts if no valid point is found within 1.2×radius.
+- Improved corner coverage: added outward-diagonal/quadrant ring search and right-side coverage fixes.
+- Agent radius estimated via HSV detection of the green agent; collision mask via dilation of wall mask.
+
+Surprises:
+- Several “valid” corner pixels were unsafe once dilation was applied—dilation caught near-corner collision risks that simple white checks missed.
+- A small naming inconsistency (anotated vs annotated) propagated easily and needed explicit cleanup.
+
+Important details:
+- Internal walls are axis-aligned, dark rectangles not touching the border; outer boundary is excluded.
+- Safe placement band: start at radius+1 and stop at floor(1.2×radius). If none found, skip that corner.
+- Output file: working/annotated_view.jpg only.
+
+Next time:
+- Consider parameterizing thresholds and radius clamp in a config for level variance.
+- Optionally add per-corner diagnostics in working/ to explain skips without drawing outside working/.
