@@ -1,5 +1,9 @@
 """
 Image injection utilities for attaching game screenshots to user inputs.
+
+Note: With local text-only models like Qwen3 0.6B, images are NOT injected
+into the main input stream. Instead, image analysis is done separately
+via tools that call GPT-5 for vision capabilities.
 """
 
 import os
@@ -10,6 +14,11 @@ from langchain.schema import HumanMessage
 
 # Import from same environment directory
 from .game_tools import get_latest_game_image, get_game_instance
+
+
+# Flag to control whether to inject images into main input
+# Set to False when using local text-only models
+USE_VISION_IN_MAIN_INPUT = False
 
 
 def encode_image_to_base64(image_path: str) -> tuple[str, str]:
@@ -57,9 +66,13 @@ def inject_image(user_input: str) -> Union[str, HumanMessage]:
     """
     Inject the latest game screenshot into the user input.
     
+    Note: When USE_VISION_IN_MAIN_INPUT is False (for local text models),
+    this function simply returns the original text input but still updates
+    the GUI viewer with the current game state.
+    
     This function takes a string input and returns either:
-    - The original string if no image is available
-    - A multi-modal message with text and image if an image is available
+    - The original string if no image is available or vision is disabled
+    - A multi-modal message with text and image if vision is enabled and image available
     
     Args:
         user_input: The user's text input
@@ -75,15 +88,16 @@ def inject_image(user_input: str) -> Union[str, HumanMessage]:
         game_image = get_latest_game_image()
         
         if game_image is not None:
-            base64_data, image_format = encode_numpy_image_to_base64(game_image)
-            image_data = (base64_data, image_format, "latest game capture")
             captured_image = game_image
+            if USE_VISION_IN_MAIN_INPUT:
+                base64_data, image_format = encode_numpy_image_to_base64(game_image)
+                image_data = (base64_data, image_format, "latest game capture")
     except Exception as e:
         # If game image retrieval fails, try fallback
         pass
     
     # Fallback: Directly capture a new image from the game
-    if image_data is None:
+    if captured_image is None:
         try:
             game = get_game_instance()
             import numpy as np
@@ -96,9 +110,10 @@ def inject_image(user_input: str) -> Union[str, HumanMessage]:
             img_array = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
             
             if img_array is not None:
-                base64_data, image_format = encode_numpy_image_to_base64(img_array)
-                image_data = (base64_data, image_format, "fresh game capture")
                 captured_image = img_array
+                if USE_VISION_IN_MAIN_INPUT:
+                    base64_data, image_format = encode_numpy_image_to_base64(img_array)
+                    image_data = (base64_data, image_format, "fresh game capture")
         except Exception as e:
             # If direct capture fails, no image will be included
             pass
@@ -132,8 +147,10 @@ def inject_image(user_input: str) -> Union[str, HumanMessage]:
         except Exception as e:
             pass  # Silently ignore GUI errors
     
-    # If no image available, return original input
-    if image_data is None:
+    # If vision is disabled or no image available, return original input
+    if not USE_VISION_IN_MAIN_INPUT or image_data is None:
+        if captured_image is not None and not USE_VISION_IN_MAIN_INPUT:
+            print("[Image] Game view updated in GUI (vision disabled for main input - use analyze_current_game_view tool)")
         return user_input
     
     base64_image, image_format, source_description = image_data

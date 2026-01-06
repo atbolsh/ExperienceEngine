@@ -7,14 +7,15 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from langchain_openai import ChatOpenAI
-from langchain.agents import AgentExecutor, create_tool_calling_agent
+from langchain.agents import AgentExecutor, create_structured_chat_agent
 from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain import hub
 
 from tools import create_tools, initialize_vector_store_manager, initialize_env
 from tools.memory_schema import list_memory_folders
+from llm_utils import get_local_llm
 
 
 def load_environment_blurb() -> str:
@@ -134,12 +135,10 @@ def create_agent():
     # Initialize environment (car, game, etc.)
     initialize_env()
     
-    # Create the LLM (image injection happens in main.py at input level)
-    llm = ChatOpenAI(
-        model="gpt-5",
-        temperature=0.7,
-        api_key=os.getenv("OPENAI_API_KEY")
-    )
+    # Create the LLM using local Qwen3 0.6B model
+    # Image injection still happens in main.py at input level
+    # Vision-based tool calls will use GPT-5 separately
+    llm = get_local_llm()
     
     # Create tools
     tools = create_tools()
@@ -180,16 +179,50 @@ def create_agent():
     if continuity_section:
         formatted_prompt += continuity_section
     
-    # Create the prompt template
+    # For local models like Qwen3 0.6B, we use a structured chat agent
+    # which works better with smaller models that don't have native tool calling
+    # Pull the structured chat prompt from LangChain hub and customize it
+    base_prompt = hub.pull("hwchase17/structured-chat-agent")
+    
+    # Inject our system prompt into the structured chat template
+    structured_system_prefix = formatted_prompt + """
+
+You have access to the following tools. Use them wisely to accomplish tasks.
+
+IMPORTANT: When you want to use a tool, respond with a JSON blob with "action" and "action_input" keys.
+The "action" value must be the exact tool name, and "action_input" must be a dict with the tool's parameters.
+
+Example tool use:
+```json
+{{
+  "action": "list_directory",
+  "action_input": {{"directory_path": "."}}
+}}
+```
+
+When you have gathered enough information or completed the task, respond with:
+```json
+{{
+  "action": "Final Answer",
+  "action_input": "Your final response here"
+}}
+```
+
+Available tools:
+{tools}
+
+Tool names: {tool_names}
+"""
+    
+    # Create the prompt template with our custom system message
     prompt = ChatPromptTemplate.from_messages([
-        ("system", formatted_prompt),
+        ("system", structured_system_prefix),
         MessagesPlaceholder(variable_name="chat_history"),
-        ("human", "{input}"),
-        MessagesPlaceholder(variable_name="agent_scratchpad"),
+        ("human", "{input}\n\n{agent_scratchpad}"),
     ])
     
-    # Create the agent
-    agent = create_tool_calling_agent(llm, tools, prompt)
+    # Create the structured chat agent (works better with local models)
+    agent = create_structured_chat_agent(llm, tools, prompt)
     
     # Create the agent executor
     agent_executor = AgentExecutor(

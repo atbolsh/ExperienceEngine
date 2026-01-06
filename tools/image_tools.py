@@ -9,8 +9,12 @@ from typing import List, Optional
 
 from langchain.tools import Tool, StructuredTool
 from langchain.pydantic_v1 import BaseModel, Field
-from langchain_openai import ChatOpenAI
 import os
+import sys
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+from llm_utils import get_vision_llm
 
 from tools.memory_schema import get_memory_folder
 
@@ -177,12 +181,8 @@ def analyze_memory_image(memory_type: str, memory_name: str, image_name: str, qu
         }
         mime_type = mime_type_map.get(image_ext, 'image/png')
         
-        # Create vision-enabled LLM
-        llm = ChatOpenAI(
-            model="gpt-4o",
-            temperature=0,
-            api_key=os.getenv("OPENAI_API_KEY")
-        )
+        # Use GPT-5 vision model for image analysis
+        llm = get_vision_llm()
         
         # Create prompt with memory context
         prompt = f"""You are analyzing an image from a memory folder.

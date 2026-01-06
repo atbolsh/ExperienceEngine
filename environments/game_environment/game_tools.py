@@ -290,7 +290,9 @@ def analyze_current_game_view(query: str = "") -> str:
     try:
         # Import here to avoid circular dependency
         import base64
-        from langchain_openai import ChatOpenAI
+        import sys
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+        from llm_utils import get_vision_llm
         
         # Capture fresh image
         game = get_game_instance()
@@ -358,12 +360,8 @@ def analyze_current_game_view(query: str = "") -> str:
         
         base64_image = base64.b64encode(buffer).decode('utf-8')
         
-        # Create vision-enabled LLM
-        llm = ChatOpenAI(
-            model="gpt-5",
-            temperature=0.3,
-            api_key=os.getenv("OPENAI_API_KEY")
-        )
+        # Use GPT-5 vision model for image analysis
+        llm = get_vision_llm()
         
         # Prepare analysis prompt
         if query:

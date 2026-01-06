@@ -1,5 +1,9 @@
 """
 Image injection utilities for attaching robot camera images to user inputs.
+
+Note: With local text-only models like Qwen3 0.6B, images are NOT injected
+into the main input stream. Instead, image analysis is done separately
+via tools that call GPT-5 for vision capabilities.
 """
 
 import os
@@ -11,6 +15,11 @@ from langchain.schema import HumanMessage
 
 # Import from same environment directory
 from .robot_tools import get_latest_robot_image, get_car_instance
+
+
+# Flag to control whether to inject images into main input
+# Set to False when using local text-only models
+USE_VISION_IN_MAIN_INPUT = False
 
 
 def encode_image_to_base64(image_path: str) -> tuple[str, str]:
@@ -58,9 +67,13 @@ def inject_image(user_input: str) -> Union[str, List[Dict[str, Any]]]:
     """
     Inject the latest robot camera image into the user input.
     
+    Note: When USE_VISION_IN_MAIN_INPUT is False (for local text models),
+    this function simply returns the original text input but still updates
+    the GUI viewer with the current camera image.
+    
     This function takes a string input and returns either:
-    - The original string if no image is available
-    - A multi-modal list with text and image if an image is available
+    - The original string if no image is available or vision is disabled
+    - A multi-modal list with text and image if vision is enabled and image available
     
     Args:
         user_input: The user's text input
@@ -76,24 +89,26 @@ def inject_image(user_input: str) -> Union[str, List[Dict[str, Any]]]:
         robot_image = get_latest_robot_image()
         
         if robot_image is not None:
-            base64_data, image_format = encode_numpy_image_to_base64(robot_image)
-            image_data = (base64_data, image_format, "latest robot camera capture")
             captured_image = robot_image
+            if USE_VISION_IN_MAIN_INPUT:
+                base64_data, image_format = encode_numpy_image_to_base64(robot_image)
+                image_data = (base64_data, image_format, "latest robot camera capture")
     except Exception as e:
         # If robot image retrieval fails, try fallback
         pass
     
     # Fallback: Directly capture a new image from the robot camera
-    if image_data is None:
+    if captured_image is None:
         try:
             car = get_car_instance()
             img_bytes = car.capture_image()
             img_array = cv2.imdecode(img_bytes, cv2.IMREAD_UNCHANGED)
             
             if img_array is not None:
-                base64_data, image_format = encode_numpy_image_to_base64(img_array)
-                image_data = (base64_data, image_format, "fresh robot camera capture")
                 captured_image = img_array
+                if USE_VISION_IN_MAIN_INPUT:
+                    base64_data, image_format = encode_numpy_image_to_base64(img_array)
+                    image_data = (base64_data, image_format, "fresh robot camera capture")
         except Exception as e:
             # If direct capture fails, no image will be included
             pass
@@ -108,8 +123,10 @@ def inject_image(user_input: str) -> Union[str, List[Dict[str, Any]]]:
         except Exception as e:
             pass  # Silently ignore GUI errors
     
-    # If no image available, return original input
-    if image_data is None:
+    # If vision is disabled or no image available, return original input
+    if not USE_VISION_IN_MAIN_INPUT or image_data is None:
+        if captured_image is not None and not USE_VISION_IN_MAIN_INPUT:
+            print("[Image] Camera view updated in GUI (vision disabled for main input - use image analysis tools)")
         return user_input
     
     base64_image, image_format, source_description = image_data
