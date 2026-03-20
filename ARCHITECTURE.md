@@ -168,7 +168,7 @@ The tools are organized in a modular fashion, making it easy to add new capabili
 - **Purpose**: Sequential thinking and step-by-step reasoning
 - **Tools Provided**:
   - `SequentialThinkingTool` (from sequential-thinking-tool package)
-- **Dependencies**: `sequential-thinking-tool`
+- **Dependencies**: `langchain-sequential-thinking-tool` (import: `sequential_thinking_tool`)
 - **Pattern**: Wrapper around external tool package
 - **Features**:
   - Break down complex problems into steps

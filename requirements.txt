@@ -17,7 +17,8 @@ accelerate>=0.25.0
 
 # Additional utilities
 pydantic>=2.0.0
-sequential-thinking-tool>=0.1.0
+# PyPI name (provides import sequential_thinking_tool); "sequential-thinking-tool" is not on PyPI
+langchain-sequential-thinking-tool>=0.1.0
 
 # Notebook UI (main.ipynb)
 ipywidgets>=8.0.0
