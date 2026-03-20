@@ -33,11 +33,19 @@ def initialize_game(game = None):
         try:
             import sys
             sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
-            from gui_viewer import initialize_viewer, load_gui_config
-            gui_enabled = load_gui_config()
-            if gui_enabled:
+            from gui_viewer import (
+                initialize_viewer,
+                load_gui_config,
+                get_display_mode,
+                visual_updates_enabled,
+            )
+            gui_config_on = load_gui_config()
+            if visual_updates_enabled(gui_config_on):
                 initialize_viewer(enabled=True, window_name="Game Environment")
-                print("GUI viewer enabled.")
+                if get_display_mode() == "jupyter":
+                    print("Environment view: Jupyter mode (OpenCV window disabled; use notebook image widget).")
+                else:
+                    print("GUI viewer enabled.")
                 
                 # Capture and display initial image
                 capture_game_image()

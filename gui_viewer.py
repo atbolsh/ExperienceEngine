@@ -1,13 +1,27 @@
 """
 Non-blocking GUI viewer for environment visualization.
-Displays the current state of the environment (game or car) in a small window.
+
+Display modes:
+  - terminal: OpenCV window (default), suitable for main.py / CLI.
+  - jupyter: No OpenCV thread; images are passed to an optional handler
+    (e.g. ipywidgets.Image) registered via set_jupyter_image_handler().
+
+Override with set_display_mode() before initialize_env(), or set DISPLAY_MODE
+in select_environment.config (terminal | jupyter).
 """
 
+import os
 import cv2
 import threading
 import numpy as np
-from typing import Optional
+from typing import Callable, Optional
 import time
+
+# BGR numpy array (same as OpenCV path)
+JupyterImageHandler = Callable[[np.ndarray], None]
+
+_display_mode: Optional[str] = None
+_jupyter_image_handler: Optional[JupyterImageHandler] = None
 
 
 class EnvironmentViewer:
@@ -113,6 +127,57 @@ class EnvironmentViewer:
 _viewer: Optional[EnvironmentViewer] = None
 
 
+def load_display_mode_from_config() -> str:
+    """Read DISPLAY_MODE from select_environment.config; default terminal."""
+    config_path = os.path.join(os.path.dirname(__file__), "select_environment.config")
+    if not os.path.exists(config_path):
+        return "terminal"
+    try:
+        with open(config_path, "r") as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("DISPLAY_MODE="):
+                    value = line.split("=", 1)[1].strip().lower()
+                    if value in ("terminal", "jupyter"):
+                        return value
+        return "terminal"
+    except OSError:
+        return "terminal"
+
+
+def get_display_mode() -> str:
+    """Active display mode: 'terminal' (OpenCV) or 'jupyter' (widget handler)."""
+    global _display_mode
+    if _display_mode is None:
+        _display_mode = load_display_mode_from_config()
+    return _display_mode
+
+
+def set_display_mode(mode: str) -> None:
+    """Force display mode before environment init (e.g. set 'jupyter' in a notebook)."""
+    global _display_mode
+    m = mode.strip().lower()
+    if m not in ("terminal", "jupyter"):
+        raise ValueError("display mode must be 'terminal' or 'jupyter'")
+    _display_mode = m
+
+
+def set_jupyter_image_handler(handler: Optional[JupyterImageHandler]) -> None:
+    """Register a callback receiving BGR uint8 images when mode is jupyter."""
+    global _jupyter_image_handler
+    _jupyter_image_handler = handler
+
+
+def should_open_terminal_window() -> bool:
+    """True if OpenCV viewer should be started (terminal mode and enabled)."""
+    return get_display_mode() == "terminal"
+
+
+def visual_updates_enabled(gui_config_true: bool) -> bool:
+    """Whether to run viewer init + initial capture (GUI config or jupyter mode)."""
+    return gui_config_true or get_display_mode() == "jupyter"
+
+
 def initialize_viewer(enabled: bool = True, window_name: str = "Environment View"):
     """
     Initialize the global environment viewer.
@@ -122,11 +187,15 @@ def initialize_viewer(enabled: bool = True, window_name: str = "Environment View
         window_name: Name of the window
     """
     global _viewer
-    
+
     if _viewer is not None:
         _viewer.stop()
-    
-    _viewer = EnvironmentViewer(window_name=window_name, enabled=enabled)
+        _viewer = None
+
+    if not enabled or get_display_mode() == "jupyter":
+        return
+
+    _viewer = EnvironmentViewer(window_name=window_name, enabled=True)
 
 
 def update_viewer(image: np.ndarray):
@@ -136,8 +205,14 @@ def update_viewer(image: np.ndarray):
     Args:
         image: New image to display (BGR format)
     """
-    global _viewer
-    
+    global _viewer, _jupyter_image_handler
+
+    if get_display_mode() == "jupyter" and _jupyter_image_handler is not None:
+        try:
+            _jupyter_image_handler(image)
+        except Exception:
+            pass
+
     if _viewer is not None:
         _viewer.update_image(image)
 
@@ -175,9 +250,9 @@ def load_gui_config() -> bool:
         with open(config_path, 'r') as f:
             for line in f:
                 line = line.strip()
-                if line.startswith('GUI='):
-                    value = line.split('=', 1)[1].strip().lower()
-                    return value in ['true', '1', 'yes', 'on']
+                if line.startswith("GUI="):
+                    value = line.split("=", 1)[1].strip().lower()
+                    return value in ["true", "1", "yes", "on"]
         
         return True  # Default to enabled if not found
     except Exception as e:

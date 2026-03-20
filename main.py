@@ -63,33 +63,38 @@ def load_closing_prompt() -> str:
         return f.read()
 
 
-def run_closing_sequence(agent, session_id: str, reason: str = "User ended the session"):
+def run_closing_sequence(
+    agent,
+    session_id: str,
+    reason: str = "User ended the session",
+    log=print,
+):
     """Run the closing sequence with the agent."""
-    print(f"\n{'=' * 60}")
-    print(f"Closing session: {reason}")
-    print(f"{'=' * 60}\n")
-    
+    log(f"\n{'=' * 60}")
+    log(f"Closing session: {reason}")
+    log(f"{'=' * 60}\n")
+
     try:
         closing_prompt = load_closing_prompt()
-        print("Agent: Reflecting on the session...\n")
-        
+        log("Agent: Reflecting on the session...\n")
+
         response = agent.invoke(
             {"input": inject_image(closing_prompt)},
-            config={"configurable": {"session_id": session_id}}
+            config={"configurable": {"session_id": session_id}},
         )
-        
-        print(f"Assistant: {response['output']}\n")
-        print(f"{'=' * 60}\n")
+
+        log(f"Assistant: {response['output']}\n")
+        log(f"{'=' * 60}\n")
     except Exception as e:
-        print(f"Error during closing sequence: {str(e)}\n")
-    
+        log(f"Error during closing sequence: {str(e)}\n")
+
     # Clear working memory at the end of each session
     try:
-        print("Clearing working memory...")
+        log("Clearing working memory...")
         clear_working_memory_function()
-        print("Working memory cleared.\n")
+        log("Working memory cleared.\n")
     except Exception as e:
-        print(f"Error clearing working memory: {str(e)}\n")
+        log(f"Error clearing working memory: {str(e)}\n")
     
     # Close the environment connection
     close_env()

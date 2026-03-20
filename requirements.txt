@@ -19,3 +19,6 @@ accelerate>=0.25.0
 pydantic>=2.0.0
 sequential-thinking-tool>=0.1.0
 
+# Notebook UI (main.ipynb)
+ipywidgets>=8.0.0
+
