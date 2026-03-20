@@ -7,11 +7,24 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from langchain.agents import AgentExecutor, create_structured_chat_agent
-from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+# LangChain >=1.0 (e.g. 1.2.x): agents moved to langchain-classic; prompts often live in langchain-core.
+try:
+    from langchain.agents import AgentExecutor, create_structured_chat_agent
+except ImportError:  # pragma: no cover - depends on installed langchain major version
+    from langchain_classic.agents import AgentExecutor, create_structured_chat_agent
+
+try:
+    from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
+except ImportError:  # pragma: no cover
+    from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+
+try:
+    from langchain import hub
+except ImportError:  # pragma: no cover - LangChain 1.x uses langchainhub
+    from langchainhub import hub
+
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
-from langchain import hub
 
 from tools import create_tools, initialize_vector_store_manager, initialize_env
 from tools.memory_schema import list_memory_folders

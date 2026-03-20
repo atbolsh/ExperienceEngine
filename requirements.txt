@@ -1,5 +1,10 @@
 # Core dependencies
-langchain>=0.1.0
+# LangChain 1.2.x: AgentExecutor / create_structured_chat_agent need langchain-classic; hub.pull needs langchainhub.
+# LangChain 0.2.x: same code paths use langchain.* (classic/hub optional but harmless if installed).
+langchain>=0.2.0,<3.0.0
+langchain-core>=0.2.0
+langchain-classic>=1.0.0
+langchainhub>=0.1.21
 langchain-openai>=0.0.5
 langchain-community>=0.0.20
 langchain-huggingface>=0.1.0
