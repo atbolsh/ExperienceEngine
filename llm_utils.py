@@ -20,6 +20,24 @@ _local_pipeline = None
 _vision_llm = None
 
 
+def _clear_stale_max_length_on_pipeline(pipe) -> None:
+    """
+    Hugging Face merges the text-generation pipeline's max_new_tokens with the model's
+    GenerationConfig, which often still carries the library default max_length=20.
+    That triggers: "Both max_new_tokens and max_length seem to have been set".
+    We rely on max_new_tokens only for the agent; clear max_length on the pipeline copy.
+    """
+    gc = getattr(pipe, "generation_config", None)
+    if gc is None:
+        return
+    try:
+        mnt = getattr(gc, "max_new_tokens", None)
+        if mnt is not None and mnt > 0:
+            gc.max_length = None
+    except Exception:
+        pass
+
+
 def _load_model_on_device(model_id, tokenizer, device, torch_dtype):
     """
     Helper to load causal LM on specified device (used by Qwen3 text model).
@@ -46,6 +64,7 @@ def _load_model_on_device(model_id, tokenizer, device, torch_dtype):
             return_full_text=False,
             pad_token_id=tokenizer.pad_token_id,
         )
+        _clear_stale_max_length_on_pipeline(pipe)
     else:
         model = AutoModelForCausalLM.from_pretrained(
             model_id,
@@ -67,6 +86,7 @@ def _load_model_on_device(model_id, tokenizer, device, torch_dtype):
             pad_token_id=tokenizer.pad_token_id,
             device="cpu",
         )
+        _clear_stale_max_length_on_pipeline(pipe)
 
     return model, pipe
 
