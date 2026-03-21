@@ -7,8 +7,13 @@ In 1.x, Tool / StructuredTool / Document / HumanMessage / etc. live under langch
 
 from langchain_core.documents import Document
 from langchain_core.messages import HumanMessage
-from langchain_core.pydantic_v1 import BaseModel, Field, validator
 from langchain_core.tools import Tool, StructuredTool, tool
+
+try:
+    from langchain_core.pydantic_v1 import BaseModel, Field, validator
+except ImportError:
+    # Newer langchain-core drops langchain_core.pydantic_v1; Pydantic v2 ships a v1-compat namespace.
+    from pydantic.v1 import BaseModel, Field, validator
 
 try:
     from langchain.text_splitter import RecursiveCharacterTextSplitter
