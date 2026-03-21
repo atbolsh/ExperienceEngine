@@ -18,17 +18,67 @@ try:
 except ImportError:  # pragma: no cover
     from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 
-try:
-    from langchain import hub
-except ImportError:  # pragma: no cover - LangChain 1.x uses langchainhub
-    from langchainhub import hub
-
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 
 from tools import create_tools, initialize_vector_store_manager, initialize_env
 from tools.memory_schema import list_memory_folders
 from llm_utils import get_local_llm
+
+STRUCTURED_CHAT_SUFFIX_PATH = Path(__file__).resolve().parent / "prompts" / "structured_chat_system_suffix.txt"
+STRUCTURED_CHAT_HUB_ID = "hwchase17/structured-chat-agent"
+
+
+def _structured_chat_suffix_from_hub_pull(pulled) -> str:
+    """Reduce hub.pull(...) to a single system string with {tools} / {tool_names} if present."""
+    from langchain_core.prompts import ChatPromptTemplate
+
+    if isinstance(pulled, ChatPromptTemplate):
+        chunks: list[str] = []
+        for msg in pulled.messages:
+            prompt = getattr(msg, "prompt", None)
+            tmpl = getattr(prompt, "template", None) if prompt is not None else None
+            if isinstance(tmpl, str) and tmpl.strip():
+                chunks.append(tmpl.strip())
+        if chunks:
+            return "\n\n".join(chunks)
+
+    tmpl = getattr(pulled, "template", None)
+    if isinstance(tmpl, str) and tmpl.strip():
+        return tmpl.strip()
+
+    raise TypeError(f"Unsupported hub artifact type: {type(pulled)!r}")
+
+
+def load_structured_chat_system_suffix() -> str:
+    """
+    System suffix for structured chat (JSON tool protocol and {tools} / {tool_names}).
+
+    Primary: ``prompts/structured_chat_system_suffix.txt`` (canonical copy in repo).
+    Fallback: ``langchain_classic.hub.pull("hwchase17/structured-chat-agent")``.
+    """
+    try:
+        text = STRUCTURED_CHAT_SUFFIX_PATH.read_text(encoding="utf-8").strip()
+        if text:
+            return text
+    except OSError as e:
+        print(f"[Agent] Missing {STRUCTURED_CHAT_SUFFIX_PATH.name} ({e}); trying langchain_classic.hub...")
+
+    try:
+        from langchain_classic import hub
+
+        pulled = hub.pull(STRUCTURED_CHAT_HUB_ID)
+        suffix = _structured_chat_suffix_from_hub_pull(pulled)
+        if suffix.strip():
+            print(f"[Agent] Loaded structured-chat suffix from Hub fallback ({STRUCTURED_CHAT_HUB_ID}).")
+            return suffix
+    except Exception as e:
+        print(f"[Agent] langchain_classic.hub fallback failed: {e}")
+
+    raise RuntimeError(
+        f"Could not load structured chat system suffix. Restore prompts/{STRUCTURED_CHAT_SUFFIX_PATH.name} "
+        f"or install langchain-classic and allow Hub access for {STRUCTURED_CHAT_HUB_ID!r}."
+    )
 
 
 def load_environment_blurb() -> str:
@@ -192,40 +242,10 @@ def create_agent():
     if continuity_section:
         formatted_prompt += continuity_section
     
-    # For local models like Qwen3 0.6B, we use a structured chat agent
-    # which works better with smaller models that don't have native tool calling
-    # Pull the structured chat prompt from LangChain hub and customize it
-    base_prompt = hub.pull("hwchase17/structured-chat-agent")
-    
-    # Inject our system prompt into the structured chat template
-    structured_system_prefix = formatted_prompt + """
-
-You have access to the following tools. Use them wisely to accomplish tasks.
-
-IMPORTANT: When you want to use a tool, respond with a JSON blob with "action" and "action_input" keys.
-The "action" value must be the exact tool name, and "action_input" must be a dict with the tool's parameters.
-
-Example tool use:
-```json
-{{
-  "action": "list_directory",
-  "action_input": {{"directory_path": "."}}
-}}
-```
-
-When you have gathered enough information or completed the task, respond with:
-```json
-{{
-  "action": "Final Answer",
-  "action_input": "Your final response here"
-}}
-```
-
-Available tools:
-{tools}
-
-Tool names: {tool_names}
-"""
+    # For local models like Qwen3 0.6B, we use a structured chat agent (JSON tool protocol).
+    # Full tool-format spec: prompts/structured_chat_system_suffix.txt; Hub via langchain_classic only if that file is missing.
+    structured_suffix = load_structured_chat_system_suffix()
+    structured_system_prefix = formatted_prompt + "\n\n" + structured_suffix
     
     # Create the prompt template with our custom system message
     prompt = ChatPromptTemplate.from_messages([

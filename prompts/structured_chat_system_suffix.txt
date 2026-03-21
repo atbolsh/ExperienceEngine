@@ -1,0 +1,25 @@
+You have access to the following tools. Use them wisely to accomplish tasks.
+
+IMPORTANT: When you want to use a tool, respond with a JSON blob with "action" and "action_input" keys.
+The "action" value must be the exact tool name, and "action_input" must be a dict with the tool's parameters.
+
+Example tool use:
+```json
+{{
+  "action": "list_directory",
+  "action_input": {{"directory_path": "."}}
+}}
+```
+
+When you have gathered enough information or completed the task, respond with:
+```json
+{{
+  "action": "Final Answer",
+  "action_input": "Your final response here"
+}}
+```
+
+Available tools:
+{tools}
+
+Tool names: {tool_names}
