@@ -226,9 +226,10 @@ def analyze_current_game_view(query=""):
     
     try:
         import base64
-        from langchain_openai import ChatOpenAI
-        from langchain_compat import HumanMessage
         from datetime import datetime
+
+        from langchain_compat import HumanMessage
+        from llm_utils import get_vision_llm
         
         # Get current surface data (preserves any arrows or drawings)
         img_array = _game.getData()
@@ -255,12 +256,7 @@ def analyze_current_game_view(query=""):
         
         base64_image = base64.b64encode(buffer).decode('utf-8')
         
-        # Create vision-enabled LLM
-        llm = ChatOpenAI(
-            model="gpt-5",
-            temperature=0.3,
-            api_key=os.getenv("OPENAI_API_KEY")
-        )
+        llm = get_vision_llm()
         
         # Prepare analysis prompt
         if query:

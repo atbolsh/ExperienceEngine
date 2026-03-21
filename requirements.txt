@@ -15,10 +15,11 @@ python-dotenv>=1.0.0
 faiss-cpu>=1.7.4
 tiktoken>=0.5.2
 
-# Local LLM dependencies (Qwen3 0.6B)
-transformers>=4.40.0
+# Local LLM dependencies (Qwen3 0.6B text + Qwen2-VL vision)
+transformers>=4.45.0
 torch>=2.0.0
 accelerate>=0.25.0
+qwen-vl-utils>=0.0.8
 
 # OpenCV (import cv2). Headless avoids GUI libs on servers; for desktop OpenCV windows use:
 #   pip uninstall opencv-python-headless -y && pip install opencv-python

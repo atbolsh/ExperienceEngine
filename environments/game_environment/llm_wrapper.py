@@ -3,7 +3,7 @@ Image injection utilities for attaching game screenshots to user inputs.
 
 Note: With local text-only models like Qwen3 0.6B, images are NOT injected
 into the main input stream. Instead, image analysis is done separately
-via tools that call GPT-5 for vision capabilities.
+via tools that call the local Qwen2-VL vision model (llm_utils.get_vision_llm).
 """
 
 import os

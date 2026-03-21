@@ -9,7 +9,7 @@ import cv2
 import time
 from datetime import datetime
 from typing import List, Optional
-from langchain_compat import StructuredTool, Tool
+from langchain_compat import BaseModel, Field, StructuredTool, Tool
 
 # Import Car from same directory
 from .car import Car
@@ -256,6 +256,23 @@ def get_latest_robot_image():
     return _latest_image
 
 
+class AnalyzeCurrentViewInput(BaseModel):
+    """Structured args for vision analysis (structured chat passes a JSON dict)."""
+
+    query: str = Field(
+        default="",
+        description="Question about the current camera view.",
+    )
+    question: str = Field(
+        default="",
+        description="Optional; same as query. If both are set, query is preferred.",
+    )
+
+
+def _run_analyze_current_view(query: str = "", question: str = "") -> str:
+    return analyze_current_view((query or question).strip())
+
+
 def analyze_current_view(query: str = "") -> str:
     """
     Capture a fresh image from the robot's camera and provide an instant analysis.
@@ -277,8 +294,11 @@ def analyze_current_view(query: str = "") -> str:
     try:
         # Import here to avoid circular dependency
         import base64
-        from langchain_openai import ChatOpenAI
-        
+        import sys
+
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
+        from llm_utils import get_vision_llm
+
         # Capture fresh image
         car = get_car_instance()
         img_bytes = car.capture_image()
@@ -304,15 +324,10 @@ def analyze_current_view(query: str = "") -> str:
         if not success:
             return "Error: Failed to encode image for analysis."
         
-        base64_image = base64.b64encode(buffer).decode('utf-8')
-        
-        # Create vision-enabled LLM
-        llm = ChatOpenAI(
-            model="gpt-5",
-            temperature=0.3,
-            api_key=os.getenv("OPENAI_API_KEY")
-        )
-        
+        base64_image = base64.b64encode(buffer).decode("utf-8")
+
+        llm = get_vision_llm()
+
         # Prepare analysis prompt
         if query:
             analysis_prompt = f"Analyze this image from the robot's camera and answer the following: {query}\n\nProvide a clear, concise, and detailed response."
@@ -359,10 +374,11 @@ def create_robot_tools() -> List[Tool]:
             description="Capture an image from the robot's camera. The image will be available for analysis and saved to working memory. Call this before analyzing the robot's surroundings.",
             args_schema=None
         ),
-        Tool(
+        StructuredTool.from_function(
+            func=_run_analyze_current_view,
             name="analyze_current_view",
-            func=analyze_current_view,
-            description="Capture and analyze the robot's current camera view in one step. This is especially useful in the MIDDLE of a tool chain when you need to check what the robot sees right now, without waiting for the next user interaction. Returns a detailed text description of the current view. You can optionally provide a specific question about the environment (e.g., 'what objects are visible?', 'is there anything blocking the path?'). Use this when you need immediate visual feedback during a multi-step task."
+            description="Capture and analyze the robot's current camera view in one step. This is especially useful in the MIDDLE of a tool chain when you need to check what the robot sees right now, without waiting for the next user interaction. Returns a detailed text description of the current view. Put your question in 'query' or 'question'. Use this when you need immediate visual feedback during a multi-step task.",
+            args_schema=AnalyzeCurrentViewInput,
         ),
         Tool(
             name="turn_robot_left",

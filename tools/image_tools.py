@@ -141,7 +141,7 @@ def retrieve_memory_image(memory_type: str, memory_name: str, image_name: str) -
 def analyze_memory_image(memory_type: str, memory_name: str, image_name: str, question: str) -> str:
     """
     Analyze an image from a memory folder in the context of the memory's text and a specific question.
-    Uses GPT-4o vision capabilities to analyze the image.
+    Uses the local Qwen2-VL vision model (llm_utils.get_vision_llm) to analyze the image.
     
     Args:
         memory_type: Type of memory ('semantic', 'procedural', 'episodic')
@@ -180,7 +180,7 @@ def analyze_memory_image(memory_type: str, memory_name: str, image_name: str, qu
         }
         mime_type = mime_type_map.get(image_ext, 'image/png')
         
-        # Use GPT-5 vision model for image analysis
+        # Local Qwen2-VL via llm_utils.get_vision_llm
         llm = get_vision_llm()
         
         # Create prompt with memory context

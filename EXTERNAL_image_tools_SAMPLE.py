@@ -1,25 +1,21 @@
 """
 Image analysis tools for the RAG agent.
-Provides image analysis capabilities using the agent's main LLM (GPT-5).
+Use a vision-capable model with invoke([HumanMessage]); e.g. llm_utils.get_vision_llm().
 """
 
 import os
 import base64
-from typing import List, Optional
+from typing import Any, List, Optional
 from langchain_compat import HumanMessage, tool
-from langchain_openai import ChatOpenAI
 
 
-# Global LLM instance (shared with the agent)
-_llm: Optional[ChatOpenAI] = None
+# Global LLM instance (vision model — same interface as get_vision_llm())
+_llm: Optional[Any] = None
 
 
-def initialize_image_tools(llm: ChatOpenAI) -> None:
+def initialize_image_tools(llm: Any) -> None:
     """
-    Initialize image tools with the agent's LLM.
-    
-    Args:
-        llm: The ChatOpenAI LLM instance from the agent
+    Initialize image tools with a vision LLM (must support invoke on HumanMessage lists).
     """
     global _llm
     _llm = llm

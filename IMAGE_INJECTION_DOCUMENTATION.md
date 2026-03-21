@@ -67,13 +67,9 @@ The image is now available for analysis.
 
 Changed the LLM initialization to use the custom wrapper:
 
-**Before:**
+**Before (example — remote API):**
 ```python
-llm = ChatOpenAI(
-    model="gpt-5",
-    temperature=0.7,
-    api_key=os.getenv("OPENAI_API_KEY")
-)
+llm = ChatOpenAI(model="...", api_key=os.getenv("OPENAI_API_KEY"))
 ```
 
 **After:**

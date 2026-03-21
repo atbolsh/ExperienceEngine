@@ -185,7 +185,7 @@ def create_agent():
     
     # Create the LLM using local Qwen3 0.6B model
     # Image injection still happens in main.py at input level
-    # Vision-based tool calls will use GPT-5 separately
+    # Vision-based tool calls use local Qwen2-VL via llm_utils.get_vision_llm()
     llm = get_local_llm()
     
     # Create tools

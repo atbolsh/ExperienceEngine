@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 from datetime import datetime
 from typing import List, Optional
-from langchain_compat import StructuredTool, Tool
+from langchain_compat import BaseModel, Field, StructuredTool, Tool
 
 # Global game instance
 game_instance = None
@@ -277,6 +277,24 @@ def get_latest_game_image():
     return _latest_image
 
 
+class AnalyzeCurrentGameViewInput(BaseModel):
+    """Structured args for the vision tool (structured chat sends a JSON dict, not a single string)."""
+
+    query: str = Field(
+        default="",
+        description="Question about the current game view, e.g. 'Where is the gold?'",
+    )
+    question: str = Field(
+        default="",
+        description="Optional; same role as query. If both are set, query is preferred.",
+    )
+
+
+def _run_analyze_current_game_view(query: str = "", question: str = "") -> str:
+    combined = (query or question).strip()
+    return analyze_current_game_view(combined)
+
+
 def analyze_current_game_view(query: str = "") -> str:
     """
     Capture a fresh image from the game and provide an instant analysis.
@@ -368,7 +386,7 @@ def analyze_current_game_view(query: str = "") -> str:
         
         base64_image = base64.b64encode(buffer).decode('utf-8')
         
-        # Use GPT-5 vision model for image analysis
+        # Local Qwen2-VL (see llm_utils.get_vision_llm)
         llm = get_vision_llm()
         
         # Prepare analysis prompt
@@ -417,10 +435,11 @@ def create_game_tools() -> List[Tool]:
             description="Capture an image from the game's current state. The image will be available for analysis and saved to working memory. Call this before analyzing the game environment.",
             args_schema=None
         ),
-        Tool(
+        StructuredTool.from_function(
+            func=_run_analyze_current_game_view,
             name="analyze_current_game_view",
-            func=analyze_current_game_view,
-            description="Capture and analyze the game's current state in one step. This is especially useful in the MIDDLE of a tool chain when you need to check what the agent sees right now, without waiting for the next user interaction. Returns a detailed text description of the current view. You can optionally provide a specific question about the game state (e.g., 'where is the gold?', 'what obstacles are visible?'). Use this when you need immediate visual feedback during a multi-step task."
+            description="Capture and analyze the game's current state in one step. This is especially useful in the MIDDLE of a tool chain when you need to check what the agent sees right now, without waiting for the next user interaction. Returns a detailed text description of the current view. Pass your question in the 'query' field (or 'question' if you prefer). Use this when you need immediate visual feedback during a multi-step task.",
+            args_schema=AnalyzeCurrentGameViewInput,
         ),
         StructuredTool.from_function(
             func=move_game_forward,

@@ -4,9 +4,10 @@
 
 This document outlines the recent changes to integrate robot car control and add working memory functionality.
 
-## 1. Model Update
+## 1. Model stack
 
-- **Changed model**: Updated from `gpt-4o` to `gpt-5` in `agent.py`
+- **Text agent**: Local **Qwen3** small model (`llm_utils.get_local_llm`).
+- **Vision / image analysis**: Local **Qwen2-VL** (`llm_utils.get_vision_llm`), used by environment and memory image tools—not the text agent.
 
 ## 2. Robot Car Tools
 
@@ -86,7 +87,7 @@ experience-engine/
 │   └── __init__.py               # UPDATED: Register new tools
 ├── working/                      # Temporary memory directory (cleared on exit)
 │   └── latest_capture.jpg        # Most recent robot camera capture
-├── agent.py                      # UPDATED: Changed to GPT-5
+├── agent.py                      # Local Qwen text + vision via tools / llm_utils
 ├── main.py                       # UPDATED: Clear working memory on exit
 ├── vector_store.py               # UPDATED: Added working memory support
 └── prompts/
@@ -128,5 +129,5 @@ Before deploying with the physical robot:
 - Robot car instance is created lazily on first tool use
 - Connection errors are non-fatal (tools report errors but continue)
 - Working memory cleanup is automatic and requires no agent intervention
-- The GPT-5 model is now used for all LLM operations
+- Text and vision use separate local models (see `llm_utils.py`)
 
