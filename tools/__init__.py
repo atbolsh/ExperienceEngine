@@ -7,7 +7,7 @@ import sys
 import os
 from typing import List, Tuple, Any
 
-from langchain.tools import Tool, StructuredTool
+from langchain_compat import StructuredTool, Tool
 
 from tools.memory_tools import initialize_vector_store_manager, refresh_all_vector_stores, clear_working_memory_function
 from tools.filesystem_tools import create_filesystem_tools

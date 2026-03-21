@@ -4,7 +4,7 @@ Allows the agent to control session lifecycle (end, restart).
 """
 
 from typing import List
-from langchain.tools import Tool
+from langchain_compat import Tool
 
 
 # Global flag to signal session control

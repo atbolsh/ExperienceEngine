@@ -5,8 +5,7 @@ Provides tools for querying temporary working memory that gets cleared at sessio
 
 from typing import List
 
-from langchain.tools import Tool, StructuredTool
-from langchain.pydantic_v1 import BaseModel, Field
+from langchain_compat import BaseModel, Field, StructuredTool, Tool
 
 from tools.memory_tools import query_memory_store
 

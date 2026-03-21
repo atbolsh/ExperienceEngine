@@ -8,8 +8,7 @@ import subprocess
 from pathlib import Path
 from typing import List
 
-from langchain.tools import Tool, StructuredTool
-from langchain.pydantic_v1 import BaseModel, Field
+from langchain_compat import BaseModel, Field, StructuredTool, Tool
 
 
 # Default scripts directory

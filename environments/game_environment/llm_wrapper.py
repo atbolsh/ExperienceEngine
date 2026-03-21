@@ -10,7 +10,7 @@ import os
 import base64
 import cv2
 from typing import Any, List, Optional, Union, Dict
-from langchain.schema import HumanMessage
+from langchain_compat import HumanMessage
 
 # Import from same environment directory
 from .game_tools import get_latest_game_image, get_game_instance

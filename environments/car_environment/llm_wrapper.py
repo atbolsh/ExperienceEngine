@@ -11,7 +11,7 @@ import sys
 import base64
 import cv2
 from typing import Any, List, Optional, Union, Dict
-from langchain.schema import HumanMessage
+from langchain_compat import HumanMessage
 
 # Import from same environment directory
 from .robot_tools import get_latest_robot_image, get_car_instance

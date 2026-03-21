@@ -9,7 +9,7 @@ import cv2
 import time
 from datetime import datetime
 from typing import List, Optional
-from langchain.tools import Tool, StructuredTool
+from langchain_compat import StructuredTool, Tool
 
 # Import Car from same directory
 from .car import Car
@@ -320,7 +320,7 @@ def analyze_current_view(query: str = "") -> str:
             analysis_prompt = "Analyze this image from the robot's camera. Describe what you see, including: objects, colors, spatial layout, any notable features, and the general environment. Be specific and detailed."
         
         # Create multi-modal message
-        from langchain.schema import HumanMessage
+        from langchain_compat import HumanMessage
         message = HumanMessage(content=[
             {"type": "text", "text": analysis_prompt},
             {

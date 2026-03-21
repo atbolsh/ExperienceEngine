@@ -6,9 +6,8 @@ Provides image analysis capabilities using the agent's main LLM (GPT-5).
 import os
 import base64
 from typing import List, Optional
-from langchain.tools import tool
+from langchain_compat import HumanMessage, tool
 from langchain_openai import ChatOpenAI
-from langchain.schema import HumanMessage
 
 
 # Global LLM instance (shared with the agent)

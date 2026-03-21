@@ -227,7 +227,7 @@ def analyze_current_game_view(query=""):
     try:
         import base64
         from langchain_openai import ChatOpenAI
-        from langchain.schema import HumanMessage
+        from langchain_compat import HumanMessage
         from datetime import datetime
         
         # Get current surface data (preserves any arrows or drawings)

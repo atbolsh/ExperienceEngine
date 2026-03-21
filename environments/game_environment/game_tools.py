@@ -8,7 +8,7 @@ import cv2
 import numpy as np
 from datetime import datetime
 from typing import List, Optional
-from langchain.tools import Tool, StructuredTool
+from langchain_compat import StructuredTool, Tool
 
 # Global game instance
 game_instance = None
@@ -378,7 +378,7 @@ def analyze_current_game_view(query: str = "") -> str:
             analysis_prompt = "Analyze this image from the game environment. Describe what you see, including: the agent (green circle with red eye), gold pieces (yellow/gold colored), walls (black), and the spatial layout. Be specific and detailed about positions and orientations."
         
         # Create multi-modal message
-        from langchain.schema import HumanMessage
+        from langchain_compat import HumanMessage
         message = HumanMessage(content=[
             {"type": "text", "text": analysis_prompt},
             {

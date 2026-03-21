@@ -4,7 +4,7 @@ Provides common functionality for querying vector stores.
 """
 
 from typing import List, Optional
-from langchain.schema import Document
+from langchain_compat import Document
 
 from vector_store import VectorStoreManager
 

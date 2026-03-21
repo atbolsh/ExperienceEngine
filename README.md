@@ -210,8 +210,7 @@ Easy to extend with additional tools:
 Example structure for a new tool file:
 ```python
 # tools/custom_tools.py
-from langchain.tools import Tool
-from langchain.pydantic_v1 import BaseModel, Field
+from langchain_compat import BaseModel, Field, Tool
 
 class CustomInput(BaseModel):
     param: str = Field(description="Description")

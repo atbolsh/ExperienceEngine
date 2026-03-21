@@ -7,8 +7,7 @@ import os
 from typing import List
 from pathlib import Path
 
-from langchain.tools import Tool, StructuredTool
-from langchain.pydantic_v1 import BaseModel, Field, validator
+from langchain_compat import BaseModel, Field, StructuredTool, Tool, validator
 
 
 class EditContextPromptInput(BaseModel):
