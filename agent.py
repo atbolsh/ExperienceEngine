@@ -9,9 +9,13 @@ from typing import Optional
 
 # LangChain >=1.0 (e.g. 1.2.x): agents moved to langchain-classic; prompts often live in langchain-core.
 try:
-    from langchain.agents import AgentExecutor, create_structured_chat_agent
+    from langchain.agents import AgentExecutor, create_react_agent, create_structured_chat_agent
 except ImportError:  # pragma: no cover - depends on installed langchain major version
-    from langchain_classic.agents import AgentExecutor, create_structured_chat_agent
+    from langchain_classic.agents import (
+        AgentExecutor,
+        create_react_agent,
+        create_structured_chat_agent,
+    )
 
 try:
     from langchain.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -28,6 +32,24 @@ from llm_utils import get_local_llm
 
 STRUCTURED_CHAT_SUFFIX_PATH = Path(__file__).resolve().parent / "prompts" / "structured_chat_system_suffix.txt"
 STRUCTURED_CHAT_HUB_ID = "hwchase17/structured-chat-agent"
+REACT_AGENT_SUFFIX_PATH = Path(__file__).resolve().parent / "prompts" / "react_agent_suffix.txt"
+
+
+def load_react_agent_suffix() -> str:
+    """ReAct tool-calling instructions ({tools}, {tool_names}) for small local LLMs."""
+    try:
+        text = REACT_AGENT_SUFFIX_PATH.read_text(encoding="utf-8").strip()
+        if text:
+            return text
+    except OSError as e:
+        print(f"[Agent] Missing {REACT_AGENT_SUFFIX_PATH.name} ({e}); using minimal ReAct suffix.")
+
+    return (
+        "Tools:\n{tools}\n\nTool names: {tool_names}\n\n"
+        "Use: Thought: ... then Action: <name> then Action Input: <one line, JSON if needed> "
+        "or Thought: ... then Final Answer: <reply>.\n"
+        "Do not write Observation yourself.\n"
+    )
 
 
 def _structured_chat_suffix_from_hub_pull(pulled) -> str:
@@ -227,27 +249,50 @@ def create_agent():
     if continuity_section:
         formatted_prompt += continuity_section
     
-    # For local models like Qwen3 0.6B, we use a structured chat agent (JSON tool protocol).
-    # Full tool-format spec: prompts/structured_chat_system_suffix.txt; Hub via langchain_classic only if that file is missing.
-    structured_suffix = load_structured_chat_system_suffix()
-    structured_system_prefix = formatted_prompt + "\n\n" + structured_suffix
-    
-    # Create the prompt template with our custom system message
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", structured_system_prefix),
-        MessagesPlaceholder(variable_name="chat_history"),
-        ("human", "{input}\n\n{agent_scratchpad}"),
-    ])
-    
-    # Create the structured chat agent (works better with local models)
-    agent = create_structured_chat_agent(llm, tools, prompt)
-    
-    # Create the agent executor
+    # Qwen3-0.6B rarely emits valid structured-chat JSON; ReAct (Thought/Action/Action Input) parses more reliably.
+    # Opt into JSON structured chat with USE_STRUCTURED_CHAT_AGENT=1 (stronger models only).
+    use_structured = os.environ.get("USE_STRUCTURED_CHAT_AGENT", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+
+    if use_structured:
+        print("[Agent] Structured-chat (JSON) agent — USE_STRUCTURED_CHAT_AGENT is set.")
+        tool_suffix = load_structured_chat_system_suffix()
+        human_tail = "{input}\n\n{agent_scratchpad}"
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", formatted_prompt + "\n\n" + tool_suffix),
+                MessagesPlaceholder(variable_name="chat_history", optional=True),
+                ("human", human_tail),
+            ]
+        )
+        agent = create_structured_chat_agent(llm, tools, prompt)
+    else:
+        print("[Agent] ReAct agent (default for local Qwen3-0.6B). Set USE_STRUCTURED_CHAT_AGENT=1 for JSON tools.")
+        tool_suffix = load_react_agent_suffix()
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                ("system", formatted_prompt + "\n\n" + tool_suffix),
+                MessagesPlaceholder(variable_name="chat_history", optional=True),
+                ("human", "Question: {input}\nThought:{agent_scratchpad}"),
+            ]
+        )
+        # Some chat pipelines ignore or mishandle stop sequences; REACT_AGENT_NO_STOP=1 disables \nObservation stop.
+        no_stop = os.environ.get("REACT_AGENT_NO_STOP", "").strip().lower() in ("1", "true", "yes")
+        agent = create_react_agent(llm, tools, prompt, stop_sequence=not no_stop)
+
+    parse_hint = (
+        "Format error. Use: Thought: ... then Action: <exact tool name> then Action Input: <one line> "
+        "OR Thought: ... then Final Answer: <your reply>. Do not write Observation."
+    )
+
     agent_executor = AgentExecutor(
         agent=agent,
         tools=tools,
         verbose=True,
-        handle_parsing_errors=True,
+        handle_parsing_errors=parse_hint,
         max_iterations=45,
     )
     

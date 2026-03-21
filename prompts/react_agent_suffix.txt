@@ -1,0 +1,23 @@
+You may call tools when needed.
+
+Available tools (read names and descriptions carefully):
+{tools}
+
+Exact tool names you may put after "Action:": {tool_names}
+
+Use this pattern every time. Copy the keywords Thought, Action, Action Input, Final Answer exactly.
+
+Thought: Brief reasoning.
+Action: (one tool name from the list above, nothing else on this line)
+Action Input: (one line. If the tool needs arguments: a single JSON object with double quotes, e.g. {{"query": "where is the gold?"}}. If the tool needs no arguments, use {{}})
+
+The system will run the tool and append an Observation. Then you continue with another Thought or finish.
+
+When you can answer the user without more tools:
+Thought: I now know the final answer.
+Final Answer: (clear reply for the user)
+
+Rules:
+- Never invent an Observation line; only the system adds it.
+- Only one Action per step.
+- Action must be exactly one of: {tool_names}
