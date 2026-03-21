@@ -45,6 +45,18 @@ def _load_model_on_device(model_id, tokenizer, device, torch_dtype):
     from transformers import AutoModelForCausalLM, pipeline
     import torch
 
+    # Qwen3 recommended: temperature=0.6, top_p=0.95, top_k=20 for thinking mode.
+    gen_kwargs = dict(
+        max_new_tokens=2048,
+        do_sample=True,
+        temperature=0.6,
+        top_p=0.95,
+        top_k=20,
+        repetition_penalty=1.1,
+        return_full_text=False,
+        pad_token_id=tokenizer.pad_token_id,
+    )
+
     if device == "cuda":
         model = AutoModelForCausalLM.from_pretrained(
             model_id,
@@ -52,18 +64,7 @@ def _load_model_on_device(model_id, tokenizer, device, torch_dtype):
             device_map="auto",
             trust_remote_code=True,
         )
-        pipe = pipeline(
-            "text-generation",
-            model=model,
-            tokenizer=tokenizer,
-            max_new_tokens=2048,
-            do_sample=True,
-            temperature=0.7,
-            top_p=0.9,
-            repetition_penalty=1.1,
-            return_full_text=False,
-            pad_token_id=tokenizer.pad_token_id,
-        )
+        pipe = pipeline("text-generation", model=model, tokenizer=tokenizer, **gen_kwargs)
         _clear_stale_max_length_on_pipeline(pipe)
     else:
         model = AutoModelForCausalLM.from_pretrained(
@@ -73,19 +74,7 @@ def _load_model_on_device(model_id, tokenizer, device, torch_dtype):
             low_cpu_mem_usage=True,
         )
         model = model.to("cpu")
-        pipe = pipeline(
-            "text-generation",
-            model=model,
-            tokenizer=tokenizer,
-            max_new_tokens=2048,
-            do_sample=True,
-            temperature=0.7,
-            top_p=0.9,
-            repetition_penalty=1.1,
-            return_full_text=False,
-            pad_token_id=tokenizer.pad_token_id,
-            device="cpu",
-        )
+        pipe = pipeline("text-generation", model=model, tokenizer=tokenizer, device="cpu", **gen_kwargs)
         _clear_stale_max_length_on_pipeline(pipe)
 
     return model, pipe
