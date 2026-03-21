@@ -24,34 +24,22 @@ from tools.tool_writing_tools import create_tool_writing_tools
 from tools.image_processing_tools import create_image_processing_tools
 from tools.context_tools import create_context_tools
 
+from active_environment import get_active_environment_name
+
 
 def load_environment_config(*args, **kwargs) -> str:
     """
-    Load the active environment from select_environment.config.
-    
-    Returns:
-        The name of the active environment (e.g., 'car_environment', 'game_environment')
+    Load the active environment (see active_environment.get_active_environment_name).
     """
-    config_path = os.path.join(os.path.dirname(__file__), '..', 'select_environment.config')
-    
-    if not os.path.exists(config_path):
-        print(f"Warning: Config file not found at {config_path}. Defaulting to car_environment.")
-        return 'car_environment'
-    
-    try:
-        with open(config_path, 'r') as f:
-            for line in f:
-                line = line.strip()
-                if line.startswith('ACTIVE_ENVIRONMENT='):
-                    env_name = line.split('=', 1)[1].strip()
-                    print(f"[Environment Loader] Selected environment: {env_name}")
-                    return env_name
-        
-        print("Warning: ACTIVE_ENVIRONMENT not found in config. Defaulting to car_environment.")
-        return 'car_environment'
-    except Exception as e:
-        print(f"Error reading config file: {e}. Defaulting to car_environment.")
-        return 'car_environment'
+    override = os.environ.get("EXPERIENCE_ENGINE_ACTIVE_ENV", "").strip()
+    env_name = get_active_environment_name()
+    src = (
+        "EXPERIENCE_ENGINE_ACTIVE_ENV"
+        if override in ("car_environment", "game_environment")
+        else "select_environment.config or default (game)"
+    )
+    print(f"[Environment Loader] Selected environment: {env_name} ({src})")
+    return env_name
 
 
 def load_environment() -> Tuple[Any, Any, Any]:
@@ -71,14 +59,14 @@ def load_environment() -> Tuple[Any, Any, Any]:
             from environments.game_environment import create_game_tools, initialize_game, close_game
             return create_game_tools, initialize_game, close_game
         else:
-            print(f"Warning: Unknown environment '{env_name}'. Defaulting to car_environment.")
-            from environments.car_environment import create_robot_tools, initialize_car, close_car
-            return create_robot_tools, initialize_car, close_car
+            print(f"Warning: Unknown environment '{env_name}'. Defaulting to game_environment.")
+            from environments.game_environment import create_game_tools, initialize_game, close_game
+            return create_game_tools, initialize_game, close_game
     except ImportError as e:
         print(f"Error importing environment '{env_name}': {e}")
-        print("Falling back to car_environment.")
-        from environments.car_environment import create_robot_tools, initialize_car, close_car
-        return create_robot_tools, initialize_car, close_car
+        print("Falling back to game_environment.")
+        from environments.game_environment import create_game_tools, initialize_game, close_game
+        return create_game_tools, initialize_game, close_game
 
 
 # Load the active environment

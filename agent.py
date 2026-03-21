@@ -21,6 +21,7 @@ except ImportError:  # pragma: no cover
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.runnables.history import RunnableWithMessageHistory
 
+from active_environment import get_active_environment_name
 from tools import create_tools, initialize_vector_store_manager, initialize_env
 from tools.memory_schema import list_memory_folders
 from llm_utils import get_local_llm
@@ -83,33 +84,17 @@ def load_structured_chat_system_suffix() -> str:
 
 def load_environment_blurb() -> str:
     """
-    Load the environment-specific blurb based on select_environment.config.
-    
-    Returns:
-        The environment blurb text
+    Load the environment-specific blurb (same resolution as tools / active_environment).
     """
-    config_path = os.path.join(os.path.dirname(__file__), 'select_environment.config')
-    env_name = 'car_environment'  # Default
-    
-    if os.path.exists(config_path):
-        try:
-            with open(config_path, 'r') as f:
-                for line in f:
-                    line = line.strip()
-                    if line.startswith('ACTIVE_ENVIRONMENT='):
-                        env_name = line.split('=', 1)[1].strip()
-                        break
-        except Exception as e:
-            print(f"Error reading config: {e}")
-    
-    # Determine which blurb file to load
-    if env_name == 'car_environment':
-        blurb_file = 'car_blurb.txt'
-    elif env_name == 'game_environment':
-        blurb_file = 'game_blurb.txt'
+    env_name = get_active_environment_name()
+
+    if env_name == "car_environment":
+        blurb_file = "car_blurb.txt"
+    elif env_name == "game_environment":
+        blurb_file = "game_blurb.txt"
     else:
-        print(f"Unknown environment '{env_name}', defaulting to car_blurb.txt")
-        blurb_file = 'car_blurb.txt'
+        print(f"Unknown environment '{env_name}', defaulting to game_blurb.txt")
+        blurb_file = "game_blurb.txt"
     
     # Load the blurb file
     blurb_path = os.path.join(os.path.dirname(__file__), 'prompts', blurb_file)

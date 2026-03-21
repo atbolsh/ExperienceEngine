@@ -6,6 +6,7 @@ Handles the user interaction loop and loads environment dynamically.
 import os
 from dotenv import load_dotenv
 
+from active_environment import get_active_environment_name
 from agent import create_conversational_agent
 from tools.session_tools import get_session_control_signal, reset_session_control_signal
 from tools import clear_working_memory_function, close_env
@@ -17,38 +18,26 @@ load_dotenv()
 def load_environment_inject_image():
     """
     Dynamically load the inject_image function from the active environment.
-    
-    Returns:
-        The inject_image function from the active environment
     """
-    config_path = os.path.join(os.path.dirname(__file__), 'select_environment.config')
-    env_name = 'car_environment'  # Default
-    
-    if os.path.exists(config_path):
-        try:
-            with open(config_path, 'r') as f:
-                for line in f:
-                    line = line.strip()
-                    if line.startswith('ACTIVE_ENVIRONMENT='):
-                        env_name = line.split('=', 1)[1].strip()
-                        break
-        except Exception as e:
-            print(f"Error reading config: {e}")
-    
+    env_name = get_active_environment_name()
+
     try:
-        if env_name == 'car_environment':
+        if env_name == "car_environment":
             from environments.car_environment import inject_image
+
             return inject_image
-        elif env_name == 'game_environment':
+        if env_name == "game_environment":
             from environments.game_environment import inject_image
+
             return inject_image
-        else:
-            print(f"Unknown environment '{env_name}', defaulting to car_environment")
-            from environments.car_environment import inject_image
-            return inject_image
+        print(f"Unknown environment '{env_name}', defaulting to game_environment")
+        from environments.game_environment import inject_image
+
+        return inject_image
     except ImportError as e:
         print(f"Error importing environment: {e}")
-        from environments.car_environment import inject_image
+        from environments.game_environment import inject_image
+
         return inject_image
 
 
