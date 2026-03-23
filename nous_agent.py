@@ -227,10 +227,16 @@ class NousAgent:
         self.chat_history = ChatHistory()
         self._device = next(self.model.parameters()).device
 
+    MAX_NEW_TOKENS = int(os.environ.get("AGENT_MAX_NEW_TOKENS", "8192"))
+
     # ── generation ───────────────────────────────────────────────────
 
-    def _generate(self, messages: List[dict]) -> str:
-        """Build prompt via apply_chat_template, generate with stop-at-tool_call."""
+    def _generate(self, messages: List[dict]) -> Tuple[str, bool]:
+        """Build prompt via apply_chat_template, generate with stop-at-tool_call.
+
+        Returns (text, truncated) where truncated is True if generation hit
+        max_new_tokens without a natural stop.
+        """
         import torch
 
         prompt_text = self.tokenizer.apply_chat_template(
@@ -249,7 +255,7 @@ class NousAgent:
         with torch.inference_mode():
             output_ids = self.model.generate(
                 **inputs,
-                max_new_tokens=2048,
+                max_new_tokens=self.MAX_NEW_TOKENS,
                 do_sample=True,
                 temperature=0.6,
                 top_p=0.95,
@@ -259,7 +265,10 @@ class NousAgent:
             )
 
         new_tokens = output_ids[0][prompt_len:]
-        return self.tokenizer.decode(new_tokens, skip_special_tokens=True)
+        n_generated = new_tokens.shape[0]
+        truncated = n_generated >= self.MAX_NEW_TOKENS
+        text = self.tokenizer.decode(new_tokens, skip_special_tokens=True)
+        return text, truncated
 
     # ── parsing ──────────────────────────────────────────────────────
 
@@ -318,10 +327,16 @@ class NousAgent:
         messages.append({"role": "user", "content": user_input})
 
         for iteration in range(self.max_iterations):
-            raw = self._generate(messages)
+            raw, truncated = self._generate(messages)
 
             if verbose:
-                print(f"\n--- generation {iteration} ---\n{raw}\n--- end ---\n")
+                print(f"\n--- generation {iteration} ---\n{raw}\n--- end ---")
+                if truncated:
+                    print(
+                        f"  *** TRUNCATED: hit max_new_tokens={self.MAX_NEW_TOKENS}. "
+                        f"Increase with AGENT_MAX_NEW_TOKENS env var. ***"
+                    )
+                print()
 
             tool_calls = self._parse_tool_calls(raw)
 
@@ -329,6 +344,11 @@ class NousAgent:
                 answer = self._extract_answer(raw)
                 if not answer:
                     answer = "(Model produced only internal reasoning with no visible answer.)"
+                if truncated:
+                    answer += (
+                        f"\n\n[generation truncated at {self.MAX_NEW_TOKENS} tokens"
+                        " — set AGENT_MAX_NEW_TOKENS higher]"
+                    )
 
                 self.chat_history.messages.append(
                     {"role": "user", "content": user_input}
