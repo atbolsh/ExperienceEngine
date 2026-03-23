@@ -17,6 +17,7 @@ if _force_cpu:
 # Global instances for caching
 _local_llm = None
 _local_pipeline = None
+_local_tokenizer = None
 _vision_llm = None
 
 
@@ -80,87 +81,97 @@ def _load_model_on_device(model_id, tokenizer, device, torch_dtype):
     return model, pipe
 
 
-def get_local_llm():
-    """
-    Local Qwen3 0.6B for text-only agent loop (LangChain ChatHuggingFace).
-    """
-    global _local_llm, _local_pipeline
+def _ensure_pipeline_loaded():
+    """Load the Qwen3-0.6B pipeline + tokenizer once, cache globally."""
+    global _local_pipeline, _local_tokenizer
 
-    if _local_llm is not None:
-        return _local_llm
+    if _local_pipeline is not None:
+        return
 
     print("[LLM] Loading local Qwen3-0.6B model...")
     print("[LLM] First load will download ~1.2GB model files...")
 
-    try:
-        from langchain_huggingface import HuggingFacePipeline, ChatHuggingFace
-        from transformers import AutoTokenizer
-        import torch
+    from transformers import AutoTokenizer
+    import torch
 
-        model_id = "Qwen/Qwen3-0.6B"
-        tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
-        if tokenizer.pad_token is None:
-            tokenizer.pad_token = tokenizer.eos_token
+    model_id = "Qwen/Qwen3-0.6B"
+    tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
 
-        force_cpu = os.environ.get("FORCE_CPU", "").lower() in ("1", "true", "yes")
-        use_cuda = torch.cuda.is_available() and not force_cpu
+    force_cpu = os.environ.get("FORCE_CPU", "").lower() in ("1", "true", "yes")
+    use_cuda = torch.cuda.is_available() and not force_cpu
 
-        if use_cuda:
-            print("[LLM] Attempting to use CUDA device...")
-            try:
-                model, pipe = _load_model_on_device(
-                    model_id, tokenizer, "cuda", torch.float16
-                )
-                print("[LLM] CUDA device loaded successfully")
-            except (RuntimeError, Exception) as cuda_error:
-                error_str = str(cuda_error).lower()
-                if "cuda" in error_str or "kernel" in error_str or "accelerator" in error_str:
-                    print(f"[LLM] CUDA error detected: {cuda_error}")
-                    print("[LLM] Falling back to CPU mode...")
-                    try:
-                        torch.cuda.empty_cache()
-                    except Exception:
-                        pass
-                    os.environ["CUDA_VISIBLE_DEVICES"] = ""
-                    model, pipe = _load_model_on_device(
-                        model_id, tokenizer, "cpu", torch.float32
-                    )
-                    print("[LLM] CPU fallback loaded successfully")
-                else:
-                    raise
-        else:
-            if force_cpu:
-                print("[LLM] FORCE_CPU=1 set, using CPU mode")
-                os.environ["CUDA_VISIBLE_DEVICES"] = ""
-            else:
-                print("[LLM] CUDA not available, using CPU (inference will be slower)")
+    if use_cuda:
+        print("[LLM] Attempting to use CUDA device...")
+        try:
             model, pipe = _load_model_on_device(
-                model_id, tokenizer, "cpu", torch.float32
+                model_id, tokenizer, "cuda", torch.float16
             )
+            print("[LLM] CUDA device loaded successfully")
+        except (RuntimeError, Exception) as cuda_error:
+            error_str = str(cuda_error).lower()
+            if "cuda" in error_str or "kernel" in error_str or "accelerator" in error_str:
+                print(f"[LLM] CUDA error detected: {cuda_error}")
+                print("[LLM] Falling back to CPU mode...")
+                try:
+                    torch.cuda.empty_cache()
+                except Exception:
+                    pass
+                os.environ["CUDA_VISIBLE_DEVICES"] = ""
+                model, pipe = _load_model_on_device(
+                    model_id, tokenizer, "cpu", torch.float32
+                )
+                print("[LLM] CPU fallback loaded successfully")
+            else:
+                raise
+    else:
+        if force_cpu:
+            print("[LLM] FORCE_CPU=1 set, using CPU mode")
+            os.environ["CUDA_VISIBLE_DEVICES"] = ""
+        else:
+            print("[LLM] CUDA not available, using CPU (inference will be slower)")
+        model, pipe = _load_model_on_device(
+            model_id, tokenizer, "cpu", torch.float32
+        )
 
-        _local_pipeline = pipe
-        hf_pipeline = HuggingFacePipeline(pipeline=pipe)
-        _local_llm = ChatHuggingFace(llm=hf_pipeline)
-        print("[LLM] Qwen3-0.6B loaded successfully")
+    _local_pipeline = pipe
+    _local_tokenizer = tokenizer
+    print("[LLM] Qwen3-0.6B loaded successfully")
+
+
+def get_local_llm():
+    """
+    Local Qwen3 0.6B wrapped in LangChain ChatHuggingFace (for LangChain agent path).
+    """
+    global _local_llm
+
+    if _local_llm is not None:
         return _local_llm
 
+    _ensure_pipeline_loaded()
+
+    try:
+        from langchain_huggingface import HuggingFacePipeline, ChatHuggingFace
+        hf_pipeline = HuggingFacePipeline(pipeline=_local_pipeline)
+        _local_llm = ChatHuggingFace(llm=hf_pipeline)
+        return _local_llm
     except ImportError as e:
-        print("[LLM] Error: Required packages not installed. Run:")
-        print("  pip install langchain-huggingface transformers torch accelerate")
         raise ImportError(
-            "Local LLM requires: langchain-huggingface, transformers, torch, accelerate. "
+            "LangChain agent path requires: langchain-huggingface. "
             f"Original error: {e}"
         ) from e
-    except Exception as e:
-        print(f"[LLM] Error loading local model: {e}")
-        raise
+
+
+def get_pipeline_and_tokenizer():
+    """Raw (pipeline, tokenizer) tuple for direct generation (Nous agent path)."""
+    _ensure_pipeline_loaded()
+    return _local_pipeline, _local_tokenizer
 
 
 def get_local_pipeline():
     """Raw HuggingFace text-generation pipeline for Qwen3."""
-    global _local_pipeline
-    if _local_pipeline is None:
-        get_local_llm()
+    _ensure_pipeline_loaded()
     return _local_pipeline
 
 
@@ -339,9 +350,10 @@ def get_text_llm():
 
 def reset_llm_cache():
     """Clear cached LLM / vision model instances."""
-    global _local_llm, _local_pipeline, _vision_llm
+    global _local_llm, _local_pipeline, _local_tokenizer, _vision_llm
     _local_llm = None
     _local_pipeline = None
+    _local_tokenizer = None
     _vision_llm = None
     print("[LLM] LLM cache cleared")
 
