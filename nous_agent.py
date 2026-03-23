@@ -5,8 +5,12 @@ Bypasses LangChain's agent framework entirely.  Uses Qwen3's native chat
 template (apply_chat_template with tools= parameter) and the <tool_call> /
 <tool_response> XML protocol that the model was actually trained on.
 
-Thinking (<think>…</think>) is left enabled — the model's internal reasoning
-improves output quality and is printed when AGENT_VERBOSE=1 (default).
+Generation stops at </tool_call> via a custom StoppingCriteria, the tool is
+executed, the result is inserted as a {"role": "tool"} message, the prompt is
+re-tokenized, and generation resumes.  This avoids the hallucinated-observation
+problem that plagues generate-then-parse loops.
+
+Thinking (<think>...</think>) is left enabled and printed in full.
 """
 
 from __future__ import annotations
@@ -14,8 +18,6 @@ from __future__ import annotations
 import json
 import os
 import re
-import sys
-import traceback
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -26,13 +28,19 @@ from llm_utils import get_pipeline_and_tokenizer
 
 _VERBOSE = None
 
+
 def _is_verbose() -> bool:
     global _VERBOSE
     if _VERBOSE is None:
-        _VERBOSE = os.environ.get("AGENT_VERBOSE", "1").strip().lower() not in ("0", "false", "no")
+        _VERBOSE = os.environ.get("AGENT_VERBOSE", "1").strip().lower() not in (
+            "0",
+            "false",
+            "no",
+        )
     return _VERBOSE
 
-# ── regex for parsing model output ───────────────────────────────────
+
+# ── regex ────────────────────────────────────────────────────────────
 _TOOL_CALL_RE = re.compile(
     r"<tool_call>\s*(\{.*?\})\s*</tool_call>",
     re.DOTALL,
@@ -41,7 +49,31 @@ _THINK_RE = re.compile(r"<think>(.*?)</think>", re.DOTALL)
 _TRAILING_THINK_RE = re.compile(r"<think>(.*)$", re.DOTALL)
 
 
-# ── helpers shared with langchain_agent.py ───────────────────────────
+# ── StoppingCriteria ─────────────────────────────────────────────────
+
+def _make_tool_call_stopper(tokenizer, prompt_len: int):
+    """Return a StoppingCriteriaList that halts generation at </tool_call>."""
+    from transformers import StoppingCriteria, StoppingCriteriaList
+
+    class _StopAtToolCallEnd(StoppingCriteria):
+        def __init__(self, tok, p_len):
+            super().__init__()
+            self.tok = tok
+            self.p_len = p_len
+
+        def __call__(self, input_ids, scores, **kwargs):
+            # Only decode new tokens (skip the prompt).
+            new_ids = input_ids[0][self.p_len :]
+            if new_ids.shape[0] < 4:
+                return False
+            tail = self.tok.decode(new_ids[-40:], skip_special_tokens=True)
+            return "</tool_call>" in tail
+
+    return StoppingCriteriaList([_StopAtToolCallEnd(tokenizer, prompt_len)])
+
+
+# ── prompt / blurb helpers ───────────────────────────────────────────
+
 def _load_prompt_text() -> str:
     path = Path(__file__).resolve().parent / "prompts" / "global_prompt.txt"
     return path.read_text(encoding="utf-8")
@@ -150,10 +182,10 @@ def _tool_to_schema(tool) -> dict:
     return schema
 
 
-# ── chat history wrapper (exposes .clear() for main.py compat) ───────
+# ── chat history wrapper ─────────────────────────────────────────────
 
 class ChatHistory:
-    """Minimal chat history with the same .clear() API that main.py expects."""
+    """Minimal chat history with .clear() for main.py compat."""
 
     def __init__(self):
         self.messages: List[Dict[str, str]] = []
@@ -167,6 +199,9 @@ class ChatHistory:
 class NousAgent:
     """
     Agentic loop using Qwen3's native <tool_call> / <tool_response> protocol.
+
+    Generation uses model.generate() directly (not the pipeline wrapper) so we
+    can inject a StoppingCriteria that halts at </tool_call>.
 
     Public interface mirrors the LangChain path so main.py needs no changes:
         agent.invoke({"input": "..."}, config={"configurable": {"session_id": "..."}})
@@ -186,43 +221,50 @@ class NousAgent:
         self.tool_schemas = [_tool_to_schema(t) for t in tools]
         self.tool_map = {t.name: t for t in tools}
         self.pipeline = pipeline
+        self.model = pipeline.model
         self.tokenizer = tokenizer
         self.max_iterations = max_iterations
         self.chat_history = ChatHistory()
+        self._device = next(self.model.parameters()).device
 
     # ── generation ───────────────────────────────────────────────────
 
     def _generate(self, messages: List[dict]) -> str:
-        """Format messages with the Qwen3 chat template and generate."""
-        prompt = self.tokenizer.apply_chat_template(
+        """Build prompt via apply_chat_template, generate with stop-at-tool_call."""
+        import torch
+
+        prompt_text = self.tokenizer.apply_chat_template(
             messages,
             tools=self.tool_schemas,
             enable_thinking=True,
             add_generation_prompt=True,
             tokenize=False,
         )
-        outputs = self.pipeline(prompt, return_full_text=False)
-        return outputs[0]["generated_text"]
+        inputs = self.tokenizer(prompt_text, return_tensors="pt")
+        inputs = {k: v.to(self._device) for k, v in inputs.items()}
+        prompt_len = inputs["input_ids"].shape[1]
+
+        stop = _make_tool_call_stopper(self.tokenizer, prompt_len)
+
+        with torch.inference_mode():
+            output_ids = self.model.generate(
+                **inputs,
+                max_new_tokens=2048,
+                do_sample=True,
+                temperature=0.6,
+                top_p=0.95,
+                top_k=20,
+                repetition_penalty=1.1,
+                stopping_criteria=stop,
+            )
+
+        new_tokens = output_ids[0][prompt_len:]
+        return self.tokenizer.decode(new_tokens, skip_special_tokens=True)
 
     # ── parsing ──────────────────────────────────────────────────────
 
     @staticmethod
-    def _extract_thinking(text: str) -> Tuple[str, str]:
-        """Return (thinking_content, remainder_after_stripping_think_blocks)."""
-        thinks: list[str] = []
-        for m in _THINK_RE.finditer(text):
-            thinks.append(m.group(1).strip())
-        cleaned = _THINK_RE.sub("", text)
-        # Handle unclosed trailing <think>
-        trail = _TRAILING_THINK_RE.search(cleaned)
-        if trail:
-            thinks.append(trail.group(1).strip())
-            cleaned = _TRAILING_THINK_RE.sub("", cleaned)
-        return "\n".join(thinks), cleaned.strip()
-
-    @staticmethod
     def _parse_tool_calls(text: str) -> List[Tuple[str, dict]]:
-        """Extract all <tool_call> blocks, return list of (name, args)."""
         results = []
         for m in _TOOL_CALL_RE.finditer(text):
             try:
@@ -236,14 +278,16 @@ class NousAgent:
                         args = {"input": args}
                 results.append((name, args))
             except json.JSONDecodeError:
-                if _is_verbose():
-                    print(f"  [parse] Malformed tool_call JSON: {m.group(1)[:120]}")
+                print(f"  [parse] Malformed tool_call JSON: {m.group(1)[:200]}")
         return results
 
     @staticmethod
-    def _strip_tool_calls(text: str) -> str:
-        """Remove <tool_call> blocks, leaving only the plain-text answer."""
-        return _TOOL_CALL_RE.sub("", text).strip()
+    def _extract_answer(text: str) -> str:
+        """Strip <think> blocks and <tool_call> blocks, return visible answer."""
+        text = _TOOL_CALL_RE.sub("", text)
+        text = _THINK_RE.sub("", text)
+        text = _TRAILING_THINK_RE.sub("", text)
+        return text.strip()
 
     # ── tool execution ───────────────────────────────────────────────
 
@@ -269,58 +313,56 @@ class NousAgent:
         user_input = input_dict["input"]
         verbose = _is_verbose()
 
-        # Build message list: system + history + new user turn
         messages: List[dict] = [{"role": "system", "content": self.system_prompt}]
         messages.extend(self.chat_history.messages)
         messages.append({"role": "user", "content": user_input})
 
         for iteration in range(self.max_iterations):
             raw = self._generate(messages)
-            thinking, visible = self._extract_thinking(raw)
 
-            if verbose and thinking:
-                print(f"  <think> {thinking[:500]}{'...' if len(thinking) > 500 else ''} </think>")
+            if verbose:
+                print(f"\n--- generation {iteration} ---\n{raw}\n--- end ---\n")
 
-            tool_calls = self._parse_tool_calls(visible)
+            tool_calls = self._parse_tool_calls(raw)
 
             if not tool_calls:
-                # No tool call — this is the final answer.
-                answer = self._strip_tool_calls(visible).strip()
-                if not answer and thinking:
-                    answer = "(The model produced only internal reasoning with no visible answer.)"
+                answer = self._extract_answer(raw)
+                if not answer:
+                    answer = "(Model produced only internal reasoning with no visible answer.)"
 
-                # Persist in chat history
-                self.chat_history.messages.append({"role": "user", "content": user_input})
-                self.chat_history.messages.append({"role": "assistant", "content": answer})
+                self.chat_history.messages.append(
+                    {"role": "user", "content": user_input}
+                )
+                self.chat_history.messages.append(
+                    {"role": "assistant", "content": answer}
+                )
                 return {"output": answer}
 
-            # Append the full assistant turn (including tool_call tags) for context
+            # Append the assistant turn (with tool_call tags intact so
+            # apply_chat_template can format it properly on the next call).
             messages.append({"role": "assistant", "content": raw})
 
             for name, args in tool_calls:
-                if verbose:
-                    print(f"  > Tool: {name}({json.dumps(args, ensure_ascii=False)[:200]})")
-
                 result = self._run_tool(name, args)
 
                 if verbose:
-                    print(f"  < Result: {result[:300]}{'...' if len(result) > 300 else ''}")
+                    print(f"  <tool_call> {name}({json.dumps(args, ensure_ascii=False)})")
+                    print(f"  <tool_response>\n  {result}\n  </tool_response>\n")
 
                 messages.append({"role": "tool", "content": result, "name": name})
 
-        # Exhausted iterations
-        answer = "I reached the maximum number of tool-calling steps. Here is what I have so far."
+        answer = "Reached maximum tool-calling iterations."
         self.chat_history.messages.append({"role": "user", "content": user_input})
         self.chat_history.messages.append({"role": "assistant", "content": answer})
         return {"output": answer}
 
 
-# ── factory (matches langchain_agent.py's create_conversational_agent) ─
+# ── factory ──────────────────────────────────────────────────────────
 
 def create_conversational_agent():
     """Create a NousAgent with tools, memory, and environment.
 
-    Returns (agent, chat_history) with the same interface as langchain_agent.
+    Returns (agent, chat_history) — same interface as langchain_agent.
     """
     print("Initializing vector stores...")
     initialize_vector_store_manager()
