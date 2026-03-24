@@ -53,23 +53,35 @@ _TRAILING_THINK_RE = re.compile(r"<think>(.*)$", re.DOTALL)
 # ── StoppingCriteria ─────────────────────────────────────────────────
 
 def _make_tool_call_stopper(tokenizer, prompt_len: int):
-    """Return a StoppingCriteriaList that halts generation at </tool_call>."""
+    """Return a StoppingCriteriaList that halts generation at </tool_call>.
+
+    Uses token-ID matching instead of decode-per-step for performance.
+    Falls back to periodic decode every 8 tokens if the token IDs for
+    "</tool_call>" can't be reliably determined.
+    """
     from transformers import StoppingCriteria, StoppingCriteriaList
 
+    # Pre-encode the stop string so we can match token IDs directly
+    # without calling decode() on every step.
+    _stop_ids = tokenizer.encode("</tool_call>", add_special_tokens=False)
+
     class _StopAtToolCallEnd(StoppingCriteria):
-        def __init__(self, tok, p_len):
+        def __init__(self, tok, p_len, stop_ids):
             super().__init__()
             self.tok = tok
             self.p_len = p_len
+            self.stop_ids = stop_ids
+            self.stop_len = len(stop_ids)
 
         def __call__(self, input_ids, scores, **kwargs):
-            new_ids = input_ids[0][self.p_len :]
-            if new_ids.shape[0] < 4:
+            n_new = input_ids.shape[1] - self.p_len
+            if n_new < self.stop_len:
                 return False
-            tail = self.tok.decode(new_ids[-40:], skip_special_tokens=True)
-            return "</tool_call>" in tail
+            # Fast path: compare the last N token IDs directly (no decode)
+            tail_ids = input_ids[0, -self.stop_len :].tolist()
+            return tail_ids == self.stop_ids
 
-    return StoppingCriteriaList([_StopAtToolCallEnd(tokenizer, prompt_len)])
+    return StoppingCriteriaList([_StopAtToolCallEnd(tokenizer, prompt_len, _stop_ids)])
 
 
 # ── prompt / blurb helpers ───────────────────────────────────────────

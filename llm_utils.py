@@ -62,11 +62,20 @@ def _load_model_on_device(model_id, tokenizer, device, torch_dtype):
     )
 
     if device == "cuda":
+        # Try Flash Attention 2 for ~2x throughput on Ampere+ GPUs (A100, etc.)
+        extra = {}
+        try:
+            import flash_attn  # noqa: F401
+            extra["attn_implementation"] = "flash_attention_2"
+            print("[LLM] Flash Attention 2 available — enabling")
+        except ImportError:
+            pass
         model = AutoModelForCausalLM.from_pretrained(
             model_id,
             torch_dtype=torch_dtype,
             device_map="auto",
             trust_remote_code=True,
+            **extra,
         )
         pipe = pipeline("text-generation", model=model, tokenizer=tokenizer, **gen_kwargs)
         _clear_stale_max_length_on_pipeline(pipe)
