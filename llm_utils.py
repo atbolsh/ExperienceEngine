@@ -1,7 +1,10 @@
 """
-LLM utilities: local Qwen3-0.6B for text and local Qwen2-VL for vision.
+LLM utilities: local text model + local Qwen2-VL for vision.
 
-Set FORCE_CPU=1 to avoid CUDA. Override vision model with VISION_MODEL_ID (default Qwen2-VL-2B-Instruct).
+Env vars:
+  TEXT_MODEL_ID   — HF id for the text/agent model (default: Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled)
+  VISION_MODEL_ID — HF id for the vision model   (default: Qwen2-VL-2B-Instruct)
+  FORCE_CPU=1     — skip CUDA entirely
 """
 
 import base64
@@ -81,20 +84,22 @@ def _load_model_on_device(model_id, tokenizer, device, torch_dtype):
     return model, pipe
 
 
+_DEFAULT_MODEL_ID = "Jackrong/Qwen3.5-27B-Claude-4.6-Opus-Reasoning-Distilled"
+
+
 def _ensure_pipeline_loaded():
-    """Load the Qwen3-0.6B pipeline + tokenizer once, cache globally."""
+    """Load the text-generation pipeline + tokenizer once, cache globally."""
     global _local_pipeline, _local_tokenizer
 
     if _local_pipeline is not None:
         return
 
-    print("[LLM] Loading local Qwen3-0.6B model...")
-    print("[LLM] First load will download ~1.2GB model files...")
-
     from transformers import AutoTokenizer
     import torch
 
-    model_id = "Qwen/Qwen3-0.6B"
+    model_id = os.environ.get("TEXT_MODEL_ID", _DEFAULT_MODEL_ID).strip()
+    print(f"[LLM] Loading text model: {model_id}")
+
     tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
@@ -105,8 +110,9 @@ def _ensure_pipeline_loaded():
     if use_cuda:
         print("[LLM] Attempting to use CUDA device...")
         try:
+            dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
             model, pipe = _load_model_on_device(
-                model_id, tokenizer, "cuda", torch.float16
+                model_id, tokenizer, "cuda", dtype
             )
             print("[LLM] CUDA device loaded successfully")
         except (RuntimeError, Exception) as cuda_error:
@@ -130,20 +136,18 @@ def _ensure_pipeline_loaded():
             print("[LLM] FORCE_CPU=1 set, using CPU mode")
             os.environ["CUDA_VISIBLE_DEVICES"] = ""
         else:
-            print("[LLM] CUDA not available, using CPU (inference will be slower)")
+            print("[LLM] CUDA not available, using CPU (will be very slow for 27B)")
         model, pipe = _load_model_on_device(
             model_id, tokenizer, "cpu", torch.float32
         )
 
     _local_pipeline = pipe
     _local_tokenizer = tokenizer
-    print("[LLM] Qwen3-0.6B loaded successfully")
+    print(f"[LLM] {model_id} loaded successfully")
 
 
 def get_local_llm():
-    """
-    Local Qwen3 0.6B wrapped in LangChain ChatHuggingFace (for LangChain agent path).
-    """
+    """Wrapped in LangChain ChatHuggingFace (for LangChain agent path)."""
     global _local_llm
 
     if _local_llm is not None:
@@ -170,7 +174,7 @@ def get_pipeline_and_tokenizer():
 
 
 def get_local_pipeline():
-    """Raw HuggingFace text-generation pipeline for Qwen3."""
+    """Raw HuggingFace text-generation pipeline."""
     _ensure_pipeline_loaded()
     return _local_pipeline
 
