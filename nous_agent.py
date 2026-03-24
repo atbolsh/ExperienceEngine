@@ -231,6 +231,46 @@ class NousAgent:
         self.chat_history = ChatHistory()
         self._device = next(self.model.parameters()).device
 
+        # Cache special-token IDs for building tool-response injections
+        self._im_start_id = tokenizer.convert_tokens_to_ids("<|im_start|>")
+        self._im_end_id = tokenizer.convert_tokens_to_ids("<|im_end|>")
+
+    # ── token-level tool-response injection ──────────────────────────
+
+    def _build_tool_response_ids(self, result: str):
+        """Build the token IDs that the model expects between a tool call and
+        the next assistant generation.  Follows the exact Qwen3 chat template:
+
+            <|im_end|>
+            <|im_start|>user
+            <tool_response>
+            {result}
+            </tool_response><|im_end|>
+            <|im_start|>assistant
+
+        This way the model sees its trained multi-turn pattern and seamlessly
+        continues generating.
+        """
+        import torch
+
+        tok = self.tokenizer
+        dev = self._device
+
+        def _enc(text: str):
+            return tok.encode(text, add_special_tokens=False)
+
+        ids = (
+            [self._im_end_id]
+            + _enc("\n")
+            + [self._im_start_id]
+            + _enc("user\n<tool_response>\n" + result + "\n</tool_response>")
+            + [self._im_end_id]
+            + _enc("\n")
+            + [self._im_start_id]
+            + _enc("assistant\n")
+        )
+        return torch.tensor([ids], dtype=torch.long, device=dev)
+
     # ── parsing ──────────────────────────────────────────────────────
 
     @staticmethod
@@ -253,11 +293,16 @@ class NousAgent:
 
     @staticmethod
     def _extract_answer(text: str) -> str:
-        """Strip thinking, tool_call, and tool_response blocks → visible answer."""
+        """Strip thinking, tool_call, tool_response blocks, and stray
+        role labels left by skip_special_tokens decoding."""
         text = _TOOL_CALL_RE.sub("", text)
         text = _TOOL_RESPONSE_RE.sub("", text)
         text = _THINK_RE.sub("", text)
         text = _TRAILING_THINK_RE.sub("", text)
+        # After skip_special_tokens, the injected framing leaves bare
+        # "user" and "assistant" tokens between blocks — strip them.
+        text = re.sub(r"\buser\b\s*(?=\s|$)", "", text)
+        text = re.sub(r"\bassistant\b\s*(?=\s|$)", "", text)
         return text.strip()
 
     # ── tool execution ───────────────────────────────────────────────
@@ -345,18 +390,20 @@ class NousAgent:
                 # No tool call — generation is finished.
                 break
 
-            # Splice tool responses into the token stream
+            # Splice tool responses into the token stream using the
+            # exact multi-turn framing the model was trained on.
             seq = out
             for name, args in tool_calls:
                 result = self._run_tool(name, args)
-                injection = f"\n<tool_response>\n{result}\n</tool_response>\n"
 
                 if verbose:
-                    print(injection, end="", flush=True)
+                    print(
+                        f"\n<tool_response>\n{result}\n</tool_response>\n",
+                        end="",
+                        flush=True,
+                    )
 
-                inj_ids = self.tokenizer(
-                    injection, add_special_tokens=False, return_tensors="pt"
-                )["input_ids"].to(self._device)
+                inj_ids = self._build_tool_response_ids(result)
                 seq = torch.cat([seq, inj_ids], dim=1)
 
         # Everything after the original prompt is the assistant's turn:
