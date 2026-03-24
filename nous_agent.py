@@ -5,10 +5,10 @@ Bypasses LangChain's agent framework entirely.  Uses Qwen3's native chat
 template (apply_chat_template with tools= parameter) and the <tool_call> /
 <tool_response> XML protocol that the model was actually trained on.
 
-Generation stops at </tool_call> via a custom StoppingCriteria, the tool is
-executed, the result is inserted as a {"role": "tool"} message, the prompt is
-re-tokenized, and generation resumes.  This avoids the hallucinated-observation
-problem that plagues generate-then-parse loops.
+The entire assistant turn is one continuous token stream.  When the model emits
+</tool_call>, generation is suspended, the tool is run, <tool_response>...</tool_response>
+tokens are spliced into the sequence, and generation resumes from there.
+The model sees tool results as part of its own reasoning — no message-role switching.
 
 Thinking (<think>...</think>) is left enabled and printed in full.
 """
@@ -45,6 +45,7 @@ _TOOL_CALL_RE = re.compile(
     r"<tool_call>\s*(\{.*?\})\s*</tool_call>",
     re.DOTALL,
 )
+_TOOL_RESPONSE_RE = re.compile(r"<tool_response>.*?</tool_response>", re.DOTALL)
 _THINK_RE = re.compile(r"<think>(.*?)</think>", re.DOTALL)
 _TRAILING_THINK_RE = re.compile(r"<think>(.*)$", re.DOTALL)
 
@@ -62,7 +63,6 @@ def _make_tool_call_stopper(tokenizer, prompt_len: int):
             self.p_len = p_len
 
         def __call__(self, input_ids, scores, **kwargs):
-            # Only decode new tokens (skip the prompt).
             new_ids = input_ids[0][self.p_len :]
             if new_ids.shape[0] < 4:
                 return False
@@ -200,13 +200,17 @@ class NousAgent:
     """
     Agentic loop using Qwen3's native <tool_call> / <tool_response> protocol.
 
-    Generation uses model.generate() directly (not the pipeline wrapper) so we
-    can inject a StoppingCriteria that halts at </tool_call>.
+    The entire assistant reply is a single continuous generation.  When the
+    model emits </tool_call>, we pause, run the tool, splice
+    <tool_response>…</tool_response> tokens into the sequence, and resume
+    model.generate() from there.  No message-role switching — the model sees
+    tool results as part of its own stream.
 
-    Public interface mirrors the LangChain path so main.py needs no changes:
-        agent.invoke({"input": "..."}, config={"configurable": {"session_id": "..."}})
-        -> {"output": "..."}
+    Public interface:
+        agent.invoke({"input": "..."}, config=...) -> {"output": "..."}
     """
+
+    MAX_NEW_TOKENS = int(os.environ.get("AGENT_MAX_NEW_TOKENS", "8192"))
 
     def __init__(
         self,
@@ -214,7 +218,7 @@ class NousAgent:
         tools: list,
         pipeline,
         tokenizer,
-        max_iterations: int = 30,
+        max_tool_rounds: int = 15,
     ):
         self.system_prompt = system_prompt
         self.tools = tools
@@ -223,52 +227,9 @@ class NousAgent:
         self.pipeline = pipeline
         self.model = pipeline.model
         self.tokenizer = tokenizer
-        self.max_iterations = max_iterations
+        self.max_tool_rounds = max_tool_rounds
         self.chat_history = ChatHistory()
         self._device = next(self.model.parameters()).device
-
-    MAX_NEW_TOKENS = int(os.environ.get("AGENT_MAX_NEW_TOKENS", "8192"))
-
-    # ── generation ───────────────────────────────────────────────────
-
-    def _generate(self, messages: List[dict]) -> Tuple[str, bool]:
-        """Build prompt via apply_chat_template, generate with stop-at-tool_call.
-
-        Returns (text, truncated) where truncated is True if generation hit
-        max_new_tokens without a natural stop.
-        """
-        import torch
-
-        prompt_text = self.tokenizer.apply_chat_template(
-            messages,
-            tools=self.tool_schemas,
-            enable_thinking=True,
-            add_generation_prompt=True,
-            tokenize=False,
-        )
-        inputs = self.tokenizer(prompt_text, return_tensors="pt")
-        inputs = {k: v.to(self._device) for k, v in inputs.items()}
-        prompt_len = inputs["input_ids"].shape[1]
-
-        stop = _make_tool_call_stopper(self.tokenizer, prompt_len)
-
-        with torch.inference_mode():
-            output_ids = self.model.generate(
-                **inputs,
-                max_new_tokens=self.MAX_NEW_TOKENS,
-                do_sample=True,
-                temperature=0.6,
-                top_p=0.95,
-                top_k=20,
-                repetition_penalty=1.1,
-                stopping_criteria=stop,
-            )
-
-        new_tokens = output_ids[0][prompt_len:]
-        n_generated = new_tokens.shape[0]
-        truncated = n_generated >= self.MAX_NEW_TOKENS
-        text = self.tokenizer.decode(new_tokens, skip_special_tokens=True)
-        return text, truncated
 
     # ── parsing ──────────────────────────────────────────────────────
 
@@ -292,8 +253,9 @@ class NousAgent:
 
     @staticmethod
     def _extract_answer(text: str) -> str:
-        """Strip <think> blocks and <tool_call> blocks, return visible answer."""
+        """Strip thinking, tool_call, and tool_response blocks → visible answer."""
         text = _TOOL_CALL_RE.sub("", text)
+        text = _TOOL_RESPONSE_RE.sub("", text)
         text = _THINK_RE.sub("", text)
         text = _TRAILING_THINK_RE.sub("", text)
         return text.strip()
@@ -319,59 +281,102 @@ class NousAgent:
         input_dict: dict,
         config: Optional[dict] = None,
     ) -> dict:
+        import torch
+
         user_input = input_dict["input"]
         verbose = _is_verbose()
 
+        # Build the initial prompt via chat template
         messages: List[dict] = [{"role": "system", "content": self.system_prompt}]
         messages.extend(self.chat_history.messages)
         messages.append({"role": "user", "content": user_input})
 
-        for iteration in range(self.max_iterations):
-            raw, truncated = self._generate(messages)
+        prompt_text = self.tokenizer.apply_chat_template(
+            messages,
+            tools=self.tool_schemas,
+            enable_thinking=True,
+            add_generation_prompt=True,
+            tokenize=False,
+        )
+
+        # Tokenize once — this is our running token sequence
+        seq = self.tokenizer(prompt_text, return_tensors="pt")["input_ids"].to(
+            self._device
+        )
+        prompt_len = seq.shape[1]
+
+        truncated = False
+
+        for tool_round in range(self.max_tool_rounds):
+            # Generate from current sequence, stop at </tool_call> or EOS
+            gen_start = seq.shape[1]
+            stop = _make_tool_call_stopper(self.tokenizer, gen_start)
+
+            with torch.inference_mode():
+                out = self.model.generate(
+                    input_ids=seq,
+                    max_new_tokens=self.MAX_NEW_TOKENS,
+                    do_sample=True,
+                    temperature=0.6,
+                    top_p=0.95,
+                    top_k=20,
+                    repetition_penalty=1.1,
+                    stopping_criteria=stop,
+                )
+
+            n_new = out.shape[1] - gen_start
+            truncated = n_new >= self.MAX_NEW_TOKENS
+            new_text = self.tokenizer.decode(
+                out[0][gen_start:], skip_special_tokens=True
+            )
 
             if verbose:
-                print(f"\n--- generation {iteration} ---\n{raw}\n--- end ---")
+                print(new_text, end="", flush=True)
                 if truncated:
                     print(
-                        f"  *** TRUNCATED: hit max_new_tokens={self.MAX_NEW_TOKENS}. "
-                        f"Increase with AGENT_MAX_NEW_TOKENS env var. ***"
+                        f"\n*** TRUNCATED at {self.MAX_NEW_TOKENS} tokens — "
+                        f"set AGENT_MAX_NEW_TOKENS higher ***"
                     )
-                print()
 
-            tool_calls = self._parse_tool_calls(raw)
+            # Check for tool calls in the newly generated chunk
+            tool_calls = self._parse_tool_calls(new_text)
 
             if not tool_calls:
-                answer = self._extract_answer(raw)
-                if not answer:
-                    answer = "(Model produced only internal reasoning with no visible answer.)"
-                if truncated:
-                    answer += (
-                        f"\n\n[generation truncated at {self.MAX_NEW_TOKENS} tokens"
-                        " — set AGENT_MAX_NEW_TOKENS higher]"
-                    )
+                # No tool call — generation is finished.
+                break
 
-                self.chat_history.messages.append(
-                    {"role": "user", "content": user_input}
-                )
-                self.chat_history.messages.append(
-                    {"role": "assistant", "content": answer}
-                )
-                return {"output": answer}
-
-            # Append the assistant turn (with tool_call tags intact so
-            # apply_chat_template can format it properly on the next call).
-            messages.append({"role": "assistant", "content": raw})
-
+            # Splice tool responses into the token stream
+            seq = out
             for name, args in tool_calls:
                 result = self._run_tool(name, args)
+                injection = f"\n<tool_response>\n{result}\n</tool_response>\n"
 
                 if verbose:
-                    print(f"  <tool_call> {name}({json.dumps(args, ensure_ascii=False)})")
-                    print(f"  <tool_response>\n  {result}\n  </tool_response>\n")
+                    print(injection, end="", flush=True)
 
-                messages.append({"role": "tool", "content": result, "name": name})
+                inj_ids = self.tokenizer(
+                    injection, add_special_tokens=False, return_tensors="pt"
+                )["input_ids"].to(self._device)
+                seq = torch.cat([seq, inj_ids], dim=1)
 
-        answer = "Reached maximum tool-calling iterations."
+        # Everything after the original prompt is the assistant's turn:
+        # <think>…<tool_call>…</tool_call><tool_response>…</tool_response>…</think> answer
+        full_assistant = self.tokenizer.decode(
+            seq[0][prompt_len:], skip_special_tokens=True
+        )
+
+        if verbose:
+            print()  # newline after streaming output
+
+        answer = self._extract_answer(full_assistant)
+        if not answer:
+            answer = "(Model produced only internal reasoning with no visible answer.)"
+        if truncated:
+            answer += (
+                f"\n\n[generation truncated at {self.MAX_NEW_TOKENS} tokens"
+                " — set AGENT_MAX_NEW_TOKENS higher]"
+            )
+
         self.chat_history.messages.append({"role": "user", "content": user_input})
         self.chat_history.messages.append({"role": "assistant", "content": answer})
         return {"output": answer}
